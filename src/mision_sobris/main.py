@@ -11,15 +11,20 @@ from mision_sobris.entities import Chaser, Cookie, Player
 # Running in the browser (built with pygbag), where there is no window to close.
 WEB = sys.platform == "emscripten"
 
+# (key, title shown to players, description shown to players)
 MODES = [
-    ("Classic", "Eat cookies at your own pace. Burnt ones shrink you!"),
-    ("Challenge", f"{settings.CHALLENGE_TIME} seconds. Avoid burnt cookies and the angry ones!"),
+    ("classic", "Clásico", "Comé galletitas a tu ritmo. ¡Las quemadas te achican!"),
+    ("challenge", "Desafío", f"{settings.CHALLENGE_TIME} segundos. ¡Esquivá las quemadas y las enojadas!"),
 ]
 
 # Tappable areas, for touch screens and the mouse.
+CHARACTER_RECTS = [pygame.Rect(0, 0, 200, 250) for _ in settings.CHARACTERS]
+for i, rect in enumerate(CHARACTER_RECTS):
+    rect.center = (settings.WIDTH // 2 + (i - (len(CHARACTER_RECTS) - 1) / 2) * 225, 300)
 MODE_RECTS = [pygame.Rect(0, 0, 680, 80) for _ in MODES]
 for i, rect in enumerate(MODE_RECTS):
     rect.center = (settings.WIDTH // 2, 262 + i * 100)
+CHANGE_CHARACTER_BUTTON = pygame.Rect(16, 16, 190, 44)
 MENU_BUTTON = pygame.Rect(0, 0, 110, 40)
 MENU_BUTTON.midtop = (settings.WIDTH // 2, 10)
 PLAY_AGAIN_BUTTON = pygame.Rect(0, 0, 220, 60)
@@ -35,10 +40,11 @@ TAP_COOLDOWN = 0.25  # seconds
 class Round:
     """One play-through of a mode, from start until time runs out or the player is caught."""
 
-    def __init__(self, mode):
+    def __init__(self, mode, character):
         self.mode = mode
-        self.challenge = mode == "Challenge"
-        self.player = Player(settings.WIDTH / 2, settings.HEIGHT / 2)
+        self.character = character
+        self.challenge = mode == "challenge"
+        self.player = Player(settings.WIDTH / 2, settings.HEIGHT / 2, character)
         self.cookies = [self.new_cookie() for _ in range(settings.COOKIE_COUNT)]
         self.cookies += [self.new_cookie(burnt=True) for _ in range(settings.BURNT_COUNT)]
         self.score = 0
@@ -69,12 +75,12 @@ class Round:
         for chaser in self.chasers:
             chaser.update(dt, self.player.pos)
             if chaser.touches(self.player):
-                self.result = "You got eaten!"
+                self.result = "¡Te comieron!"
 
         if self.time_left is not None and not self.result:
             self.time_left = max(0.0, self.time_left - dt)
             if self.time_left == 0:
-                self.result = "Time's up!"
+                self.result = "¡Se acabó el tiempo!"
 
     def draw(self, screen, fonts):
         screen.fill(settings.BG_COLOR)
@@ -84,10 +90,12 @@ class Round:
         for chaser in self.chasers:
             chaser.draw(screen)
 
-        screen.blit(fonts["hud"].render(f"Cookies: {self.score}", True, settings.TEXT_COLOR), (16, 12))
+        screen.blit(fonts["hud"].render(f"Galletitas: {self.score}", True, settings.TEXT_COLOR), (16, 12))
+        cheer = fonts["small"].render(f"¡Vamos, {self.character['name']}!", True, settings.HIGHLIGHT_COLOR)
+        screen.blit(cheer, (16, 48))
         if self.time_left is not None:
             color = settings.HIGHLIGHT_COLOR if self.time_left < 5 else settings.TEXT_COLOR
-            timer = fonts["hud"].render(f"Time: {self.time_left:4.1f}", True, color)
+            timer = fonts["hud"].render(f"Tiempo: {self.time_left:4.1f}", True, color)
             screen.blit(timer, timer.get_rect(topright=(settings.WIDTH - 16, 12)))
 
         if self.result:
@@ -95,12 +103,13 @@ class Round:
             overlay.fill(settings.OVERLAY_COLOR)
             screen.blit(overlay, (0, 0))
             draw_centered(screen, fonts["title"], self.result, settings.HEIGHT / 2 - 80)
-            draw_centered(screen, fonts["hud"], f"Cookies eaten: {self.score}", settings.HEIGHT / 2 - 10)
-            draw_button(screen, fonts["hud"], PLAY_AGAIN_BUTTON, "Play again")
-            draw_button(screen, fonts["hud"], BACK_BUTTON, "Menu")
-            draw_centered(screen, fonts["small"], "Enter: play again    Esc: menu", settings.HEIGHT / 2 + 160)
+            draw_centered(screen, fonts["hud"], f"Galletitas comidas: {self.score}", settings.HEIGHT / 2 - 10)
+            draw_button(screen, fonts["hud"], PLAY_AGAIN_BUTTON, "Otra vez")
+            draw_button(screen, fonts["hud"], BACK_BUTTON, "Menú")
+            if not WEB:
+                draw_centered(screen, fonts["small"], "Enter: otra vez    Esc: menú", settings.HEIGHT / 2 + 160)
         else:
-            draw_button(screen, fonts["small"], MENU_BUTTON, "Menu")
+            draw_button(screen, fonts["small"], MENU_BUTTON, "Menú")
 
 
 def draw_centered(screen, font, text, y, color=settings.TEXT_COLOR):
@@ -115,18 +124,46 @@ def draw_button(screen, font, rect, label):
     screen.blit(text, text.get_rect(center=rect.center))
 
 
-def draw_menu(screen, fonts, selected):
+def draw_character(screen, character, center, radius):
+    """A still portrait of a character's cookie, looking straight ahead."""
+    portrait = Player(*center, character)
+    portrait.radius = radius
+    portrait.facing = pygame.Vector2(0, 0)
+    portrait.draw(screen)
+
+
+def draw_character_select(screen, fonts, highlighted):
     screen.fill(settings.BG_COLOR)
-    draw_centered(screen, fonts["title"], settings.TITLE, 110)
-    for i, ((name, description), rect) in enumerate(zip(MODES, MODE_RECTS)):
+    draw_centered(screen, fonts["title"], settings.TITLE, 70)
+    draw_centered(screen, fonts["hud"], "¿Quién sos?", 135)
+    for i, (character, rect) in enumerate(zip(settings.CHARACTERS, CHARACTER_RECTS)):
+        color = settings.HIGHLIGHT_COLOR if i == highlighted else settings.TEXT_COLOR
+        pygame.draw.rect(screen, color, rect, width=3, border_radius=16)
+        draw_character(screen, character, (rect.centerx, rect.top + 105), 55)
+        name = fonts["hud"].render(character["name"], True, color)
+        screen.blit(name, name.get_rect(center=(rect.centerx, rect.bottom - 35)))
+    hint = "Tocá tu galletita" if WEB else "Hacé clic en tu galletita o usá Izq/Der + Enter    Esc: salir"
+    draw_centered(screen, fonts["small"], hint, settings.HEIGHT - 40)
+
+
+def draw_mode_menu(screen, fonts, character, selected):
+    screen.fill(settings.BG_COLOR)
+    greeting = fonts["title"].render(f"¡Hola, {character['name']}!", True, settings.TEXT_COLOR)
+    greeting_rect = greeting.get_rect(center=(settings.WIDTH / 2 + 40, 140))
+    screen.blit(greeting, greeting_rect)
+    draw_character(screen, character, (greeting_rect.left - 60, greeting_rect.centery), 40)
+    for i, ((_, name, description), rect) in enumerate(zip(MODES, MODE_RECTS)):
         color = settings.HIGHLIGHT_COLOR if i == selected else settings.TEXT_COLOR
         pygame.draw.rect(screen, color, rect, width=3, border_radius=14)
         draw_centered(screen, fonts["hud"], f"{i + 1}. {name}", rect.centery - 16, color)
         draw_centered(screen, fonts["small"], description, rect.centery + 18)
-    hint = "Tap a mode to play" if WEB else "Click a mode or use Up/Down + Enter    Esc: quit"
-    draw_centered(screen, fonts["small"], hint, settings.HEIGHT - 40)
+    draw_button(screen, fonts["small"], CHANGE_CHARACTER_BUTTON, "Cambiar sobri")
     if WEB:
-        draw_centered(screen, fonts["small"], "Touch and hold to move the cookie", settings.HEIGHT - 70)
+        draw_centered(screen, fonts["small"], "Mantené el dedo apretado para mover la galletita", settings.HEIGHT - 70)
+        draw_centered(screen, fonts["small"], "Tocá un modo para jugar", settings.HEIGHT - 40)
+    else:
+        draw_centered(screen, fonts["small"], "Hacé clic en un modo o usá Arriba/Abajo + Enter    Esc: cambiar sobri",
+                      settings.HEIGHT - 40)
 
 
 async def run():
@@ -144,8 +181,10 @@ async def run():
         "small": pygame.font.Font(None, 28),
     }
 
-    selected = 0
-    current = None  # the Round being played, or None while in the menu
+    character = None  # the chosen character, or None while picking one
+    highlighted = 0  # character highlighted with the keyboard
+    selected = 0  # mode highlighted with the keyboard
+    current = None  # the Round being played, or None while in a menu
     pointer = None  # where a finger or the mouse button is held down, if anywhere
     last_tap = 0.0
 
@@ -171,42 +210,64 @@ async def run():
 
             elif event.type != pygame.KEYDOWN:
                 continue
-            elif current is None:
+            elif character is None:
+                count = len(settings.CHARACTERS)
                 if event.key == pygame.K_ESCAPE and not WEB:
                     running = False
+                elif event.key in (pygame.K_LEFT, pygame.K_a):
+                    highlighted = (highlighted - 1) % count
+                elif event.key in (pygame.K_RIGHT, pygame.K_d):
+                    highlighted = (highlighted + 1) % count
+                elif pygame.K_1 <= event.key < pygame.K_1 + count:
+                    highlighted = event.key - pygame.K_1
+                    character = settings.CHARACTERS[highlighted]
+                elif event.key in (pygame.K_RETURN, pygame.K_SPACE):
+                    character = settings.CHARACTERS[highlighted]
+            elif current is None:
+                if event.key == pygame.K_ESCAPE:
+                    character = None
                 elif event.key in (pygame.K_UP, pygame.K_w):
                     selected = (selected - 1) % len(MODES)
                 elif event.key in (pygame.K_DOWN, pygame.K_s):
                     selected = (selected + 1) % len(MODES)
                 elif event.key in (pygame.K_1, pygame.K_2):
                     selected = event.key - pygame.K_1
-                    current = Round(MODES[selected][0])
+                    current = Round(MODES[selected][0], character)
                 elif event.key in (pygame.K_RETURN, pygame.K_SPACE):
-                    current = Round(MODES[selected][0])
+                    current = Round(MODES[selected][0], character)
             elif event.key == pygame.K_ESCAPE:
                 current = None
             elif current.result and event.key in (pygame.K_RETURN, pygame.K_SPACE):
-                current = Round(current.mode)
+                current = Round(current.mode, character)
 
         now = time.monotonic()
         if tap is not None and now - last_tap > TAP_COOLDOWN:
             last_tap = now
-            if current is None:
-                for i, rect in enumerate(MODE_RECTS):
+            if character is None:
+                for i, rect in enumerate(CHARACTER_RECTS):
                     if rect.collidepoint(tap):
+                        highlighted = i
+                        character = settings.CHARACTERS[i]
+            elif current is None:
+                if CHANGE_CHARACTER_BUTTON.collidepoint(tap):
+                    character = None
+                for i, rect in enumerate(MODE_RECTS):
+                    if character and rect.collidepoint(tap):
                         selected = i
-                        current = Round(MODES[i][0])
+                        current = Round(MODES[i][0], character)
             elif current.result:
                 if PLAY_AGAIN_BUTTON.collidepoint(tap):
-                    current = Round(current.mode)
+                    current = Round(current.mode, character)
                 elif BACK_BUTTON.collidepoint(tap):
                     current = None
             elif MENU_BUTTON.collidepoint(tap):
                 current = None
                 pointer = None
 
-        if current is None:
-            draw_menu(screen, fonts, selected)
+        if character is None:
+            draw_character_select(screen, fonts, highlighted)
+        elif current is None:
+            draw_mode_menu(screen, fonts, character, selected)
         else:
             current.update(dt, pointer)
             current.draw(screen, fonts)

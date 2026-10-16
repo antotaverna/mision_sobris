@@ -1,7 +1,7 @@
 WIDTH = 960
 HEIGHT = 540
 FPS = 60
-TITLE = "Cookie eats cookies"
+TITLE = "Misión Sobris"
 
 BG_COLOR = (250, 236, 214)
 TEXT_COLOR = (90, 55, 30)
@@ -12,6 +12,19 @@ OVERLAY_COLOR = (250, 236, 214, 210)
 COOKIE_COLORS = ((160, 105, 50), (214, 160, 90), (70, 40, 20))
 BURNT_COLORS = ((30, 20, 15), (65, 42, 28), (20, 12, 8))
 CHASER_COLORS = ((120, 60, 30), (175, 95, 50), (60, 25, 10))
+
+# Playable characters, one per nephew/niece. accessory is one of:
+# "cap", "headphones", "crown", "glasses" (see entities.draw_accessory).
+CHARACTERS = [
+    {"name": "Juani", "colors": ((80, 45, 25), (115, 70, 40), (245, 235, 220)),  # chocolate
+     "accessory": "cap", "accent": (40, 90, 200)},
+    {"name": "Lucha", "colors": ((200, 110, 130), (240, 170, 185), (175, 35, 65)),  # strawberry
+     "accessory": "headphones", "accent": (130, 60, 190)},
+    {"name": "Male", "colors": ((205, 170, 110), (250, 228, 175), (90, 55, 25)),  # vanilla
+     "accessory": "crown", "accent": (235, 185, 40)},
+    {"name": "Juli", "colors": ((150, 90, 40), (200, 135, 70), (105, 55, 20)),  # dulce de leche
+     "accessory": "glasses", "accent": (40, 150, 70)},
+]
 
 PLAYER_RADIUS = 28
 PLAYER_MIN_RADIUS = 16

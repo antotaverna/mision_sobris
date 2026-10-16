@@ -72,8 +72,49 @@ class Cookie:
         draw_cookie(surface, self.pos, self.radius, self.chips, colors)
 
 
+def draw_accessory(surface, center, radius, kind, color, facing):
+    """Draw a character's accessory on a cookie of the given radius."""
+    cx, cy = center
+    r = radius
+    side = 1 if facing.x >= 0 else -1
+    look = facing * r * 0.15  # same offset draw_eyes uses
+    if kind == "cap":
+        # Dome on top of the cookie plus a brim pointing where the cookie looks.
+        dome = pygame.Rect(0, 0, r * 1.5, r * 1.1)
+        dome.midbottom = (cx, cy - r * 0.45)
+        pygame.draw.ellipse(surface, color, dome)
+        brim = pygame.Rect(0, 0, r * 0.95, r * 0.22)
+        brim.midleft = (cx + side * r * 0.1, cy - r * 0.5) if side > 0 else (cx - r * 1.05, cy - r * 0.5)
+        pygame.draw.rect(surface, color, brim, border_radius=round(r * 0.11))
+        pygame.draw.circle(surface, (255, 255, 255), (cx, dome.top + r * 0.08), r * 0.09)
+    elif kind == "headphones":
+        band = pygame.Rect(0, 0, r * 2.3, r * 2.2)
+        band.center = (cx, cy + r * 0.05)
+        pygame.draw.arc(surface, color, band, math.radians(20), math.radians(160), max(3, round(r * 0.14)))
+        for s in (-1, 1):
+            cup = pygame.Rect(0, 0, r * 0.38, r * 0.62)
+            cup.center = (cx + s * r * 1.02, cy)
+            pygame.draw.rect(surface, color, cup, border_radius=round(r * 0.15))
+    elif kind == "crown":
+        base_y, top_y, half = cy - r * 0.78, cy - r * 1.35, r * 0.55
+        points = [(cx - half, base_y), (cx - half, top_y + r * 0.15), (cx - half * 0.5, base_y - r * 0.3),
+                  (cx, top_y), (cx + half * 0.5, base_y - r * 0.3), (cx + half, top_y + r * 0.15),
+                  (cx + half, base_y)]
+        pygame.draw.polygon(surface, color, points)
+        pygame.draw.circle(surface, (200, 30, 60), (cx, base_y - r * 0.14), r * 0.08)
+    elif kind == "glasses":
+        width = max(2, round(r * 0.07))
+        lenses = []
+        for s in (-1, 1):
+            eye = pygame.Vector2(cx + s * r * 0.32, cy - r * 0.22) + look
+            pygame.draw.circle(surface, color, eye, r * 0.26, width)
+            lenses.append(eye)
+        pygame.draw.line(surface, color, lenses[0] + (r * 0.26, 0), lenses[1] - (r * 0.26, 0), width)
+
+
 class Player:
-    def __init__(self, x, y):
+    def __init__(self, x, y, character=None):
+        self.character = character
         self.pos = pygame.Vector2(x, y)
         self.radius = settings.PLAYER_RADIUS
         self.chips = rim_chips(7)
@@ -114,7 +155,8 @@ class Player:
 
     def draw(self, surface):
         r = self.radius
-        draw_cookie(surface, self.pos, r, self.chips)
+        colors = self.character["colors"] if self.character else settings.COOKIE_COLORS
+        draw_cookie(surface, self.pos, r, self.chips, colors)
         draw_eyes(surface, self.pos, r, self.facing)
 
         mouth_center = self.pos + pygame.Vector2(0, r * 0.32) + self.facing * r * 0.15
@@ -130,6 +172,9 @@ class Player:
             smile = pygame.Rect(0, 0, r * 0.7, r * 0.45)
             smile.center = (round(mouth_center.x), round(mouth_center.y - r * 0.12))
             pygame.draw.arc(surface, mouth_color, smile, math.pi * 1.1, math.pi * 1.9, width)
+
+        if self.character:
+            draw_accessory(surface, self.pos, r, self.character["accessory"], self.character["accent"], self.facing)
 
 
 class Chaser:

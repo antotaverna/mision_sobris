@@ -28,7 +28,7 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install pygbag==0.9.3
-      - run: python -m pygbag --build --title "Cookie eats cookies" src
+      - run: python -m pygbag --build --title "Misión Sobris" src
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v5
         with:

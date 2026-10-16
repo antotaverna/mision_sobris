@@ -1,7 +1,8 @@
 # mision_sobris
 
-Cookie eats cookies: a tiny 2D game built with Python and [pygame-ce](https://pyga.me/).
-Move a hungry cookie around, eat the small cookies, and grow.
+Misión Sobris: a tiny 2D cookie game built with Python and [pygame-ce](https://pyga.me/).
+Each nephew/niece picks their own cookie character, then moves it around to eat the small
+cookies and grow. The in-game text is in Spanish.
 
 ## Setup
 
@@ -16,7 +17,8 @@ conda activate mision_sobris
 mision_sobris        # or: python -m mision_sobris.main
 ```
 
-Pick a mode from the menu (tap or click it, or use Up/Down + Enter, or press 1/2):
+First pick a character (Juani, Lucha, Male, or Juli; they're defined in `CHARACTERS` in
+`settings.py`), then pick a mode from the menu (tap or click it, or use Up/Down + Enter, or press 1/2):
 
 - **Classic**: eat cookies at your own pace. Touch a small cookie to eat it and grow;
   burnt (dark) cookies shrink you.
@@ -35,8 +37,8 @@ which `src/main.py` is the entry point for.
 
 ```bash
 cd src
-python -m pygbag --title "Cookie eats cookies" .   # serves it at http://localhost:8000
-python -m pygbag --build --title "Cookie eats cookies" .   # just build into src/build/web
+python -m pygbag --title "Misión Sobris" .   # serves it at http://localhost:8000
+python -m pygbag --build --title "Misión Sobris" .   # just build into src/build/web
 ```
 
 Pushing to `main` rebuilds it and publishes it to GitHub Pages
