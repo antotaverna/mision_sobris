@@ -7,7 +7,7 @@ import pygame
 
 from mision_sobris import settings
 from mision_sobris.entities import Chaser, Cookie, Player
-from mision_sobris.hidden import HiddenDino
+from mision_sobris.hidden import DINOSAURS, HiddenDino
 
 # Running in the browser (built with pygbag), where there is no window to close.
 WEB = sys.platform == "emscripten"
@@ -59,9 +59,11 @@ class Round:
         # Classic mode hides things in the floor to find by walking over them.
         self.hidden = []
         if not self.challenge:
-            for reward in ("hat", "magnifier"):
+            # Two different dinosaurs each round, picked at random.
+            species = random.sample(list(DINOSAURS), 2)
+            for reward, kind in zip(("hat", "magnifier"), species):
                 avoid = [self.player.pos] + [find.pos for find in self.hidden]
-                self.hidden.append(HiddenDino(avoid, reward))
+                self.hidden.append(HiddenDino(avoid, reward, kind))
 
     def give_reward(self, reward):
         """Dress the player up with what a hidden find gave, for the rest of the round."""
