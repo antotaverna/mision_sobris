@@ -28,6 +28,9 @@ for i, rect in enumerate(CHARACTER_RECTS):
 MODE_RECTS = [pygame.Rect(0, 0, settings.WIDTH - 60, 140) for _ in MODES]
 for i, rect in enumerate(MODE_RECTS):
     rect.center = (settings.WIDTH // 2, 500 + i * 170)
+# The secret player peeks out of the bottom-right corner of the character select.
+SECRET_SPOT = pygame.Vector2(settings.WIDTH - 16, settings.HEIGHT - 10)
+SECRET_RECT = pygame.Rect(settings.WIDTH - 70, settings.HEIGHT - 60, 70, 60)
 CHANGE_CHARACTER_BUTTON = pygame.Rect(16, 16, 190, 44)
 MENU_BUTTON = pygame.Rect(settings.WIDTH - 126, 12, 110, 40)
 PLAY_AGAIN_BUTTON = pygame.Rect(0, 0, 220, 60)
@@ -263,10 +266,11 @@ def draw_progress_panel(screen, fonts, character, collection):
     text(f"Medallas: {collection.medals(name)}", "tiny", (232, top + 186))
 
     # Everyone else, bottom right.
-    text("Los demás", "small", (415, top + 140))
+    text("Los demás", "small", (415, top + 137))
     others = [other for other in settings.CHARACTERS if other["name"] != name]
+    step = 22 if len(others) < 4 else 18
     for j, other in enumerate(others):
-        y = top + 166 + j * 22
+        y = top + (166 if len(others) < 4 else 159) + j * step
         draw_character(screen, other, (310, y), 9)
         label = fonts["tiny"].render(other["name"], True, settings.TEXT_COLOR)
         screen.blit(label, label.get_rect(midleft=(326, y)))
@@ -294,6 +298,7 @@ def draw_character_select(screen, fonts, highlighted):
     else:
         draw_centered(screen, fonts["small"], "Clic en tu galletita o flechas + Enter", settings.HEIGHT - 64)
         draw_centered(screen, fonts["small"], "Esc: salir", settings.HEIGHT - 36)
+    draw_character(screen, settings.SECRET_CHARACTER, SECRET_SPOT, 34)
 
 
 def draw_mode_menu(screen, fonts, character, selected, confirm_reset):
@@ -397,6 +402,8 @@ async def run():
                     character = settings.CHARACTERS[highlighted]
                 elif event.key in (pygame.K_RETURN, pygame.K_SPACE):
                     character = settings.CHARACTERS[highlighted]
+                elif event.key == pygame.K_1 + count:
+                    character = settings.SECRET_CHARACTER
             elif current is None:
                 if event.key == pygame.K_ESCAPE:
                     character = None
@@ -422,6 +429,8 @@ async def run():
                     if rect.collidepoint(tap):
                         highlighted = i
                         character = settings.CHARACTERS[i]
+                if SECRET_RECT.collidepoint(tap):
+                    character = settings.SECRET_CHARACTER
             elif current is None and confirm_reset:
                 if RESET_YES_BUTTON.collidepoint(tap):
                     collection.reset(character["name"])

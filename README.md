@@ -18,7 +18,8 @@ mision_sobris        # or: python -m mision_sobris.main
 ```
 
 First pick a character (Juani, Lucha, Male, or Juli; they're defined in `CHARACTERS` in
-`settings.py`), then pick a mode from the menu (tap or click it, or use Up/Down + Enter, or press 1/2):
+`settings.py`; a secret fifth one, `SECRET_CHARACTER`, peeks out of the bottom-right corner, or press 5),
+then pick a mode from the menu (tap or click it, or use Up/Down + Enter, or press 1/2):
 
 - **Classic**: eat cookies at your own pace. Touch a small cookie to eat it and grow;
   burnt (dark) cookies shrink you. Two dinosaur fossils (picked at random from a T. rex, a

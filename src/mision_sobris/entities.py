@@ -119,6 +119,14 @@ def draw_accessory(surface, center, radius, kind, color, facing):
                   (cx + half, base_y)]
         pygame.draw.polygon(surface, color, points)
         pygame.draw.circle(surface, (200, 30, 60), (cx, base_y - r * 0.14), r * 0.08)
+    elif kind == "glasses":
+        width = max(2, round(r * 0.07))
+        lenses = []
+        for s in (-1, 1):
+            eye = pygame.Vector2(cx + s * r * 0.32, cy - r * 0.22) + look
+            pygame.draw.circle(surface, color, eye, r * 0.26, width)
+            lenses.append(eye)
+        pygame.draw.line(surface, color, lenses[0] + (r * 0.26, 0), lenses[1] - (r * 0.26, 0), width)
     elif kind == "spider":
         # Spider-Man mask over the upper face: red with a web, big white lenses, mouth left free.
         size = math.ceil(r * 2)
