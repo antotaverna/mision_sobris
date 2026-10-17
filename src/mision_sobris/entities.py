@@ -202,6 +202,18 @@ def draw_hair(surface, center, radius, kind, color):
             pygame.draw.arc(surface, shade, ring, 0.5, 5.5, max(1, round(r * 0.05)))
 
 
+def draw_hair_front(surface, center, radius, kind, color):
+    """Hair that falls over the face, drawn under the eyes."""
+    r = radius
+    cx, cy = center
+    if kind == "long":
+        # Straight-cut bangs across the forehead.
+        old_clip = surface.get_clip()
+        surface.set_clip(pygame.Rect(cx - r * 1.2, cy - r * 1.2, r * 2.4, r * 0.82))
+        pygame.draw.circle(surface, color, center, r * 1.02)
+        surface.set_clip(old_clip)
+
+
 def draw_ride(surface, center, radius, kind):
     """Draw what a character rides on, sitting under the cookie."""
     cx, cy = center
@@ -279,6 +291,8 @@ class Player:
         if self.character and "hair" in self.character:
             draw_hair(surface, self.pos, r, self.character["hair"], self.character["hair_color"])
         draw_cookie(surface, self.pos, r, self.chips, colors)
+        if self.character and "hair" in self.character:
+            draw_hair_front(surface, self.pos, r, self.character["hair"], self.character["hair_color"])
         draw_eyes(surface, self.pos, r, self.facing)
 
         mouth_center = self.pos + pygame.Vector2(0, r * 0.32) + self.facing * r * 0.15
