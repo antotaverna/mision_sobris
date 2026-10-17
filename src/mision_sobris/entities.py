@@ -119,6 +119,26 @@ def draw_accessory(surface, center, radius, kind, color, facing):
                   (cx + half, base_y)]
         pygame.draw.polygon(surface, color, points)
         pygame.draw.circle(surface, (200, 30, 60), (cx, base_y - r * 0.14), r * 0.08)
+    elif kind == "spy_hat":
+        # A dark fedora with a pinched crown and a black band, tipped toward where the cookie looks.
+        size = math.ceil(r * 2.4)
+        hat = pygame.Surface((size, size), pygame.SRCALPHA)
+        x, y = size / 2, size / 2
+        dark = tuple(round(c * 0.7) for c in color)
+        crown = [(x - r * 0.58, y + r * 0.2), (x - r * 0.5, y - r * 0.42), (x - r * 0.18, y - r * 0.56),
+                 (x, y - r * 0.44), (x + r * 0.18, y - r * 0.56), (x + r * 0.5, y - r * 0.42),
+                 (x + r * 0.58, y + r * 0.2)]
+        pygame.draw.polygon(hat, color, crown)
+        pygame.draw.polygon(hat, dark, crown, max(1, round(r * 0.04)))
+        band = pygame.Rect(0, 0, r * 1.16, r * 0.17)
+        band.midbottom = (x, y + r * 0.22)
+        pygame.draw.rect(hat, (20, 20, 25), band)
+        brim = pygame.Rect(0, 0, r * 1.95, r * 0.32)
+        brim.center = (x, y + r * 0.26)
+        pygame.draw.ellipse(hat, color, brim)
+        pygame.draw.ellipse(hat, dark, brim, max(1, round(r * 0.04)))
+        hat = pygame.transform.rotate(hat, -side * 10)
+        surface.blit(hat, hat.get_rect(center=(cx, cy - r * 0.98)))
     elif kind == "spider":
         # Spider-Man mask over the upper face: red with a web, big white lenses, mouth left free.
         size = math.ceil(r * 2)
