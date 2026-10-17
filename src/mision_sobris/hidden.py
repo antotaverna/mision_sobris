@@ -150,7 +150,7 @@ def draw_banner(surface, fonts, lines):
     """A rounded box just above the progress bar with one or more (text, font, color) lines."""
     banner = pygame.Rect(0, 0, settings.WIDTH - 24, 40 + 32 * len(lines))
     banner.midbottom = (settings.WIDTH / 2, settings.PLAY_HEIGHT - 12)
-    pygame.draw.rect(surface, settings.BG_COLOR, banner, border_radius=16)
+    pygame.draw.rect(surface, settings.CARD_COLOR, banner, border_radius=16)
     pygame.draw.rect(surface, settings.HIGHLIGHT_COLOR, banner, 4, border_radius=16)
     for i, (text, font, color) in enumerate(lines):
         names = ("hud", "small") if font == "hud" else (font, "tiny")
@@ -342,7 +342,7 @@ class HiddenDino:
             bubble = pygame.Rect(0, 0, max(title.get_width(), detail.get_width()) + 28, 58)
             bubble.midbottom = (self.pos.x, self.pos.y - 52)
             bubble.clamp_ip(pygame.Rect(0, 0, settings.WIDTH, settings.PLAY_HEIGHT))
-            pygame.draw.rect(surface, settings.BG_COLOR, bubble, border_radius=12)
+            pygame.draw.rect(surface, settings.CARD_COLOR, bubble, border_radius=12)
             pygame.draw.rect(surface, settings.HIGHLIGHT_COLOR, bubble, 3, border_radius=12)
             surface.blit(title, title.get_rect(center=(bubble.centerx, bubble.top + 19)))
             surface.blit(detail, detail.get_rect(center=(bubble.centerx, bubble.top + 41)))

@@ -173,18 +173,25 @@ class Round:
                                         ("Buscalos por toda la pantalla", "small", settings.TEXT_COLOR)])
         draw_progress_panel(screen, fonts, self.character, self.collection)
 
-        screen.blit(fonts["hud"].render(f"Galletitas: {self.score}", True, settings.TEXT_COLOR), (16, 12))
+        # The score and timer sit on solid cards so cookies passing under them don't hide them.
+        score = fonts["hud"].render(f"Galletitas: {self.score}", True, settings.TEXT_COLOR)
         cheer = fonts["small"].render(f"¡Vamos, {self.character['name']}!", True, settings.HIGHLIGHT_COLOR)
+        draw_card(screen, pygame.Rect(6, 6, max(score.get_width(), cheer.get_width()) + 20, 72))
+        screen.blit(score, (16, 12))
         screen.blit(cheer, (16, 48))
         if self.time_left is not None:
             color = settings.HIGHLIGHT_COLOR if self.time_left < 5 else settings.TEXT_COLOR
             timer = fonts["hud"].render(f"Tiempo: {self.time_left:4.1f}", True, color)
-            screen.blit(timer, timer.get_rect(topright=(settings.WIDTH - 16, MENU_BUTTON.bottom + 8)))
+            timer_rect = timer.get_rect(topright=(settings.WIDTH - 16, MENU_BUTTON.bottom + 10))
+            draw_card(screen, timer_rect.inflate(20, 12))
+            screen.blit(timer, timer_rect)
 
         if self.result:
             overlay = pygame.Surface((settings.WIDTH, settings.HEIGHT), pygame.SRCALPHA)
             overlay.fill(settings.OVERLAY_COLOR)
             screen.blit(overlay, (0, 0))
+            card = pygame.Rect(24, settings.HEIGHT / 2 - 150, settings.WIDTH - 48, 340 if not WEB else 290)
+            draw_card(screen, card, settings.HIGHLIGHT_COLOR)
             result = render_fit(fonts, self.result, settings.WIDTH - 40, settings.TEXT_COLOR, ("title", "big"))
             screen.blit(result, result.get_rect(center=(settings.WIDTH / 2, settings.HEIGHT / 2 - 80)))
             draw_centered(screen, fonts["hud"], f"Galletitas comidas: {self.score}", settings.HEIGHT / 2 - 10)
@@ -194,6 +201,12 @@ class Round:
                 draw_centered(screen, fonts["small"], "Enter: otra vez    Esc: menú", settings.HEIGHT / 2 + 160)
         else:
             draw_button(screen, fonts["small"], MENU_BUTTON, "Menú")
+
+
+def draw_card(screen, rect, border=settings.TEXT_COLOR):
+    """A solid rounded box to put text on."""
+    pygame.draw.rect(screen, settings.CARD_COLOR, rect, border_radius=14)
+    pygame.draw.rect(screen, border, rect, width=3, border_radius=14)
 
 
 def draw_centered(screen, font, text, y, color=settings.TEXT_COLOR):
@@ -309,7 +322,7 @@ def draw_mode_menu(screen, fonts, character, selected, confirm_reset):
     overlay = pygame.Surface((settings.WIDTH, settings.HEIGHT), pygame.SRCALPHA)
     overlay.fill(settings.OVERLAY_COLOR)
     screen.blit(overlay, (0, 0))
-    pygame.draw.rect(screen, settings.BG_COLOR, RESET_DIALOG, border_radius=18)
+    pygame.draw.rect(screen, settings.CARD_COLOR, RESET_DIALOG, border_radius=18)
     pygame.draw.rect(screen, settings.HIGHLIGHT_COLOR, RESET_DIALOG, width=4, border_radius=18)
     draw_centered(screen, fonts["hud"], f"¿Borrar el progreso de {character['name']}?", RESET_DIALOG.top + 45)
     draw_centered(screen, fonts["small"], "Se borran sus fósiles, premios y medallas.", RESET_DIALOG.top + 88)

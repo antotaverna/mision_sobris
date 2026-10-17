@@ -10,6 +10,7 @@ BG_COLOR = (250, 236, 214)
 TEXT_COLOR = (90, 55, 30)
 HIGHLIGHT_COLOR = (200, 90, 40)
 OVERLAY_COLOR = (250, 236, 214, 210)
+CARD_COLOR = (255, 249, 238)  # solid background for signs and messages
 PANEL_COLOR = (238, 218, 188)
 
 # Cookie palettes: (edge, dough, chips)
