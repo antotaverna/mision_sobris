@@ -205,8 +205,10 @@ REWARD_TEXT = {
 class HiddenDino:
     """A dinosaur fossil buried somewhere on the floor. Finding it gives a reward."""
 
-    def __init__(self, avoid_positions, reward, species, hard=False):
+    def __init__(self, avoid_positions, reward, species, hard=False, need=None):
         self.reward = reward
+        self.need = need  # None, "big", or "small": the size needed to dig it up
+        self.marked = False  # stepped on at the wrong size, so its spot shows
         self.find_distance = settings.HIDDEN_HARD_FIND_DISTANCE if hard else settings.HIDDEN_FIND_DISTANCE
         self.hint_distance = settings.HIDDEN_HARD_HINT_DISTANCE if hard else settings.HIDDEN_HINT_DISTANCE
         self.species = species
@@ -226,12 +228,30 @@ class HiddenDino:
         self.specks = [pygame.Vector2(random.uniform(-25, 25), random.uniform(-14, 14)) for _ in range(9)]
         self.flying_dirt = []
 
+    def right_size(self, player):
+        if self.need == "big":
+            return player.radius >= settings.HIDDEN_BIG_RADIUS
+        if self.need == "small":
+            return player.radius <= settings.HIDDEN_SMALL_RADIUS
+        return True
+
+    def need_text(self, player):
+        """What the player still has to do to dig it up, as shown to players."""
+        if self.need == "big":
+            count = math.ceil((settings.HIDDEN_BIG_RADIUS - player.radius) / settings.PLAYER_GROWTH)
+            return "¡Necesitás ser más grande!", f"Comé {count} galletita{'s' if count > 1 else ''} más"
+        count = math.ceil((player.radius - settings.HIDDEN_SMALL_RADIUS) / settings.BURNT_SHRINK)
+        return "¡Necesitás achicarte!", f"Comé {count} quemada{'s' if count > 1 else ''} más"
+
     def update(self, dt, player):
         """Returns True on the frame the find is fully dug up."""
         if not self.found:
             if player.pos.distance_to(self.pos) < self.find_distance + player.radius * 0.3:
-                self.found = True
-                self.dig_timer = settings.HIDDEN_DIG_TIME
+                if self.right_size(player):
+                    self.found = True
+                    self.dig_timer = settings.HIDDEN_DIG_TIME
+                else:
+                    self.marked = True
             return False
         self.flying_dirt = [(pos + vel * dt, vel + pygame.Vector2(0, 500) * dt, life - dt)
                             for pos, vel, life in self.flying_dirt if life > 0]
@@ -250,6 +270,22 @@ class HiddenDino:
 
     def draw(self, surface, player):
         """Draw what's on the floor: hint specks, the dig, or the fossil. Goes under the player."""
+        if not self.found and self.marked:
+            # A mound with an arrow: up to grow, down to shrink.
+            mound = pygame.Rect(0, 0, 54, 24)
+            mound.center = self.pos
+            pygame.draw.ellipse(surface, DIRT_COLOR, mound)
+            pygame.draw.ellipse(surface, DIRT_DARK, mound, 3)
+            x, y = self.pos.x, self.pos.y - 32
+            if self.need == "big":
+                arrow, color = [(x, y - 14), (x + 12, y), (x + 5, y), (x + 5, y + 12), (x - 5, y + 12),
+                                (x - 5, y), (x - 12, y)], (60, 160, 70)
+            else:
+                arrow, color = [(x, y + 14), (x + 12, y), (x + 5, y), (x + 5, y - 12), (x - 5, y - 12),
+                                (x - 5, y), (x - 12, y)], (50, 110, 200)
+            pygame.draw.polygon(surface, color, arrow)
+            pygame.draw.polygon(surface, settings.TEXT_COLOR, arrow, 2)
+            return
         if not self.found:
             closeness = 1 - self.pos.distance_to(player.pos) / self.hint_distance
             for i, speck in enumerate(self.specks):
@@ -264,10 +300,21 @@ class HiddenDino:
         else:
             draw_dino_fossil(surface, self.pos, self.species)
 
-    def draw_effects(self, surface, fonts):
-        """Flying dirt and the "you found..." banner, drawn over everything else."""
+    def draw_effects(self, surface, fonts, player):
+        """Flying dirt, the "you need..." bubble, and the "you found..." banner, over everything else."""
         for pos, _, _ in self.flying_dirt:
             pygame.draw.circle(surface, DIRT_DARK, pos, 4)
+        if not self.found and self.marked and self.pos.distance_to(player.pos) < 110:
+            title, detail = self.need_text(player)
+            title = fonts["small"].render(title, True, settings.HIGHLIGHT_COLOR)
+            detail = fonts["tiny"].render(detail, True, settings.TEXT_COLOR)
+            bubble = pygame.Rect(0, 0, max(title.get_width(), detail.get_width()) + 28, 58)
+            bubble.midbottom = (self.pos.x, self.pos.y - 52)
+            bubble.clamp_ip(pygame.Rect(0, 0, settings.WIDTH, settings.PLAY_HEIGHT))
+            pygame.draw.rect(surface, settings.BG_COLOR, bubble, border_radius=12)
+            pygame.draw.rect(surface, settings.HIGHLIGHT_COLOR, bubble, 3, border_radius=12)
+            surface.blit(title, title.get_rect(center=(bubble.centerx, bubble.top + 19)))
+            surface.blit(detail, detail.get_rect(center=(bubble.centerx, bubble.top + 41)))
         if self.message_timer > 0:
             lines = [(self.title, fonts["hud"], settings.TEXT_COLOR),
                      (REWARD_TEXT[self.reward], fonts["small"], settings.TEXT_COLOR)]

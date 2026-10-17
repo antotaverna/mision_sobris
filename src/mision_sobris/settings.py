@@ -59,6 +59,9 @@ HIDDEN_HINT_DISTANCE = 130  # within this distance a few dirt specks start to sh
 # For characters with hard_finds: you have to walk right over it, and the hint shows up later.
 HIDDEN_HARD_FIND_DISTANCE = 14
 HIDDEN_HARD_HINT_DISTANCE = 60
+# Some finds can only be dug up at a certain size: big (eat cookies) or small (eat burnt ones).
+HIDDEN_BIG_RADIUS = 40  # about 8 cookies from the starting size
+HIDDEN_SMALL_RADIUS = 18  # two burnt cookies from the starting size
 HIDDEN_DIG_TIME = 1.0  # seconds of flying dirt before the find shows up
 HIDDEN_MESSAGE_TIME = 3.5  # seconds the "you found..." banner stays up
 EXPLORER_HAT_COLOR = (195, 160, 100)

@@ -81,9 +81,17 @@ class Round:
             random.shuffle(missing)
             random.shuffle(others)
             species = (missing + others)[:2]
-            for reward, kind in zip(("hat", "magnifier"), species):
+            # Some finds need the cookie to be big or small; always for hard_finds characters,
+            # at most one of the two for everyone else.
+            hard = character.get("hard_finds", False)
+            if hard:
+                needs = [random.choice(("big", "small")) for _ in species]
+            else:
+                needs = [None] * len(species)
+                needs[random.randrange(len(needs))] = random.choice((None, "big", "small"))
+            for reward, kind, need in zip(("hat", "magnifier"), species, needs):
                 avoid = [self.player.pos] + [find.pos for find in self.hidden]
-                self.hidden.append(HiddenDino(avoid, reward, kind, character.get("hard_finds", False)))
+                self.hidden.append(HiddenDino(avoid, reward, kind, hard, need))
 
     def give_reward(self, reward):
         """Dress the player up with what a hidden find gave, for the rest of the round."""
@@ -146,7 +154,7 @@ class Round:
         for chaser in self.chasers:
             chaser.draw(screen)
         for find in self.hidden:
-            find.draw_effects(screen, fonts)
+            find.draw_effects(screen, fonts, self.player)
         draw_progress_panel(screen, fonts, self.character, self.collection)
 
         screen.blit(fonts["hud"].render(f"Galletitas: {self.score}", True, settings.TEXT_COLOR), (16, 12))
