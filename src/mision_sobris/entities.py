@@ -127,6 +127,22 @@ def draw_accessory(surface, center, radius, kind, color, facing):
             pygame.draw.polygon(surface, (20, 20, 20), lens, max(2, round(r * 0.06)))
 
 
+def draw_ride(surface, center, radius, kind):
+    """Draw what a character rides on, sitting under the cookie."""
+    cx, cy = center
+    r = radius
+    if kind == "skateboard":
+        deck = pygame.Rect(0, 0, r * 1.7, r * 0.2)
+        deck.midtop = (cx, cy + r * 0.86)
+        pygame.draw.rect(surface, (40, 170, 170), deck, border_radius=round(r * 0.1))
+        pygame.draw.line(surface, (240, 90, 150), (deck.left + r * 0.2, deck.centery),
+                         (deck.right - r * 0.2, deck.centery), max(2, round(r * 0.06)))
+        for s in (-1, 1):
+            wheel = (cx + s * r * 0.55, deck.bottom + r * 0.1)
+            pygame.draw.circle(surface, (60, 60, 60), wheel, r * 0.14)
+            pygame.draw.circle(surface, (235, 235, 235), wheel, r * 0.07)
+
+
 class Player:
     def __init__(self, x, y, character=None):
         self.character = character
@@ -190,6 +206,8 @@ class Player:
 
         if self.character:
             draw_accessory(surface, self.pos, r, self.character["accessory"], self.character["accent"], self.facing)
+            if "ride" in self.character:
+                draw_ride(surface, self.pos, r, self.character["ride"])
 
 
 class Chaser:
