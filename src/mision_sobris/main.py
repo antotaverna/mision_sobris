@@ -57,7 +57,23 @@ class Round:
             self.chasers = []
             self.time_left = None
         # Classic mode hides things in the floor to find by walking over them.
-        self.hidden = [] if self.challenge else [HiddenDino(self.player.pos)]
+        self.hidden = []
+        if not self.challenge:
+            for reward in ("hat", "magnifier"):
+                avoid = [self.player.pos] + [find.pos for find in self.hidden]
+                self.hidden.append(HiddenDino(avoid, reward))
+
+    def give_reward(self, reward):
+        """Dress the player up with what a hidden find gave, for the rest of the round."""
+        character = self.player.character
+        if reward == "hat":
+            if character["accessory"] in settings.ACCESSORIES_KEPT_UNDER_HAT:
+                character = {**character, "hat": "explorer_hat"}
+            else:
+                character = {**character, "accessory": "explorer_hat", "accent": settings.EXPLORER_HAT_COLOR}
+        elif reward == "magnifier":
+            character = {**character, "held": "magnifier"}
+        self.player.character = character
 
     def new_cookie(self, burnt=False):
         return Cookie(self.player.pos, self.player.radius, burnt)
@@ -77,12 +93,7 @@ class Round:
 
         for find in self.hidden:
             if find.update(dt, self.player):
-                # The reward: an archaeologist's hat for the rest of the round.
-                if self.character["accessory"] in settings.ACCESSORIES_KEPT_UNDER_HAT:
-                    self.player.character = {**self.character, "hat": "explorer_hat"}
-                else:
-                    self.player.character = {**self.character, "accessory": "explorer_hat",
-                                             "accent": settings.EXPLORER_HAT_COLOR}
+                self.give_reward(find.reward)
 
         for chaser in self.chasers:
             chaser.update(dt, self.player.pos)

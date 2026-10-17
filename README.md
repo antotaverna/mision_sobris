@@ -21,8 +21,9 @@ First pick a character (Juani, Lucha, Male, or Juli; they're defined in `CHARACT
 `settings.py`), then pick a mode from the menu (tap or click it, or use Up/Down + Enter, or press 1/2):
 
 - **Classic**: eat cookies at your own pace. Touch a small cookie to eat it and grow;
-  burnt (dark) cookies shrink you. Something is buried in the floor: walk over it to dig
-  up a dinosaur fossil and win an explorer hat (a few dirt specks show up when you get close).
+  burnt (dark) cookies shrink you. Two dinosaur fossils are buried in the floor: walk over
+  one to dig it up. One gives an explorer hat, the other a magnifying glass (a few dirt
+  specks show up when you get close).
 - **Challenge**: 20 seconds to eat as many as you can, with burnt cookies too, while
   big angry cookies chase you (one slow, one fast); if one catches you, the round ends.
 

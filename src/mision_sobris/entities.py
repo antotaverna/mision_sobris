@@ -187,6 +187,20 @@ def draw_ride(surface, center, radius, kind):
             pygame.draw.circle(surface, (235, 235, 235), wheel, r * 0.07)
 
 
+def draw_held(surface, center, radius, kind, facing):
+    """Draw something the cookie holds out in front, on the side it's looking toward."""
+    cx, cy = center
+    r = radius
+    side = 1 if facing.x >= 0 else -1
+    if kind == "magnifier":
+        lens = pygame.Vector2(cx + side * r * 1.05, cy + r * 0.15)
+        grip = pygame.Vector2(cx + side * r * 1.3, cy + r * 0.8)
+        pygame.draw.line(surface, (70, 70, 80), lens, grip, max(3, round(r * 0.14)))
+        pygame.draw.circle(surface, (195, 228, 245), lens, r * 0.32)
+        pygame.draw.circle(surface, (255, 255, 255), lens + pygame.Vector2(-r * 0.1, -r * 0.1), r * 0.08)
+        pygame.draw.circle(surface, (70, 70, 80), lens, r * 0.32, max(2, round(r * 0.08)))
+
+
 class Player:
     def __init__(self, x, y, character=None):
         self.character = character
@@ -256,6 +270,8 @@ class Player:
                 draw_accessory(surface, self.pos, r, self.character["hat"], settings.EXPLORER_HAT_COLOR, self.facing)
             if "ride" in self.character:
                 draw_ride(surface, self.pos, r, self.character["ride"])
+            if "held" in self.character:
+                draw_held(surface, self.pos, r, self.character["held"], self.facing)
 
 
 class Chaser:

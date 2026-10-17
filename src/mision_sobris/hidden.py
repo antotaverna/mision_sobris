@@ -58,20 +58,27 @@ def draw_dino_fossil(surface, center):
         pygame.draw.polygon(surface, BONE_COLOR, [tooth, (tooth[0] + 4, tooth[1]), (tooth[0] + 2, tooth[1] + 4)])
 
 
+# What each find gives, and the line shown when it's found.
+REWARD_TEXT = {
+    "hat": "Ganaste un sombrero de arqueología",
+    "magnifier": "Ganaste una lupa de arqueología",
+}
+
+
 class HiddenDino:
-    """A dinosaur fossil buried somewhere on the floor. Finding it gives an explorer hat."""
+    """A dinosaur fossil buried somewhere on the floor. Finding it gives a reward."""
 
     title = "¡Encontraste un dinosaurio!"
-    reward = "Ganaste un sombrero de arqueología"
 
-    def __init__(self, avoid_pos):
+    def __init__(self, avoid_positions, reward):
+        self.reward = reward
         margin = 100
         for _ in range(100):
             self.pos = pygame.Vector2(
                 random.uniform(margin, settings.WIDTH - margin),
                 random.uniform(margin + 40, settings.HEIGHT - margin),
             )
-            if self.pos.distance_to(avoid_pos) > 250:
+            if all(self.pos.distance_to(avoid) > 250 for avoid in avoid_positions):
                 break
         self.found = False
         self.dig_timer = 0.0
@@ -127,6 +134,6 @@ class HiddenDino:
             pygame.draw.rect(surface, settings.BG_COLOR, banner, border_radius=16)
             pygame.draw.rect(surface, settings.HIGHLIGHT_COLOR, banner, 4, border_radius=16)
             for text, font, y in ((self.title, fonts["hud"], banner.centery - 18),
-                                  (self.reward, fonts["small"], banner.centery + 20)):
+                                  (REWARD_TEXT[self.reward], fonts["small"], banner.centery + 20)):
                 rendered = font.render(text, True, settings.TEXT_COLOR)
                 surface.blit(rendered, rendered.get_rect(center=(banner.centerx, y)))
