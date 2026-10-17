@@ -141,7 +141,7 @@ class Round:
                 self.collection.add_rare(name)
                 # Carry the flag for the rest of the round.
                 self.player.character = {**self.player.character, "flag": True}
-                find.note = "¡Un dinosaurio gigante de Argentina!"
+                find.note = None
                 continue
             self.give_reward(find.reward)
             self.collection.add(name, "rewards", find.reward)
@@ -149,9 +149,9 @@ class Round:
                 count = len(self.collection.fossils(name))
                 if count == len(DINOSAURS):
                     self.collection.complete(name)
-                    find.note = "¡Completaste la colección! Ganaste una medalla"
+                    find.note = "+ Medalla"
                 else:
-                    find.note = f"¡Nuevo en tu colección! ({count} de {len(DINOSAURS)})"
+                    find.note = f"({count} de {len(DINOSAURS)})"
 
         self.announce_timer = max(0.0, self.announce_timer - dt)
         # A buried Argentinosaurus doesn't hold up the next pair; one being dug up does.
@@ -186,8 +186,7 @@ class Round:
         for find in self.hidden:
             find.draw_effects(screen, fonts, self.player)
         if self.announce_timer > 0:
-            draw_banner(screen, fonts, [("¡Hay más dinosaurios enterrados!", "hud", settings.TEXT_COLOR),
-                                        ("Buscalos por toda la pantalla", "small", settings.TEXT_COLOR)])
+            draw_banner(screen, fonts, [("¡Hay más dinosaurios!", "hud", settings.TEXT_COLOR)])
         draw_progress_panel(screen, fonts, self.character, self.collection)
 
         # The score and timer sit on solid cards so cookies passing under them don't hide them.

@@ -163,14 +163,16 @@ def render_fit(fonts, text, max_width, color, names=("hud", "small")):
 
 def draw_banner(surface, fonts, lines):
     """A rounded box just above the progress bar with one or more (text, font, color) lines."""
-    banner = pygame.Rect(0, 0, settings.WIDTH - 24, 40 + 32 * len(lines))
+    max_width = settings.WIDTH - 48
+    rendered = [render_fit(fonts, text, max_width, color, ("hud", "small") if font == "hud" else (font, "tiny"))
+                for text, font, color in lines]
+    # Only as wide as its text, so it covers as little of the floor as it can.
+    banner = pygame.Rect(0, 0, max(text.get_width() for text in rendered) + 48, 40 + 32 * len(lines))
     banner.midbottom = (settings.WIDTH / 2, settings.PLAY_HEIGHT - 12)
     pygame.draw.rect(surface, settings.CARD_COLOR, banner, border_radius=16)
     pygame.draw.rect(surface, settings.HIGHLIGHT_COLOR, banner, 4, border_radius=16)
-    for i, (text, font, color) in enumerate(lines):
-        names = ("hud", "small") if font == "hud" else (font, "tiny")
-        rendered = render_fit(fonts, text, banner.width - 24, color, names)
-        surface.blit(rendered, rendered.get_rect(center=(banner.centerx, banner.top + 34 + i * 32)))
+    for i, text in enumerate(rendered):
+        surface.blit(text, text.get_rect(center=(banner.centerx, banner.top + 34 + i * 32)))
 
 
 # Shorter names for tight spots like the progress bar.
@@ -253,12 +255,12 @@ def draw_reward_icon(surface, center, reward, won, font):
     surface.blit(label, label.get_rect(center=(center[0], center[1] + 26)))
 
 
-# What each find gives: its short name, and the line shown when it's found.
+# What each find gives: its short name, and what the "you found..." banner says about it.
 REWARD_NAMES = {"hat": "Sombrero", "magnifier": "Lupa"}
 REWARD_TEXT = {
-    "hat": "Ganaste un sombrero de arqueología",
-    "magnifier": "Ganaste una lupa de arqueología",
-    "argentine_medal": "Ganaste la bandera y la medalla argentina",
+    "hat": "+ Sombrero",
+    "magnifier": "+ Lupa",
+    "argentine_medal": "+ Bandera y medalla",
 }
 
 
@@ -273,7 +275,7 @@ class HiddenDino:
         self.find_distance = settings.HIDDEN_HARD_FIND_DISTANCE if hard else settings.HIDDEN_FIND_DISTANCE
         self.hint_distance = settings.HIDDEN_HARD_HINT_DISTANCE if hard else settings.HIDDEN_HINT_DISTANCE
         self.species = species
-        self.title = f"¡Encontraste un {species}!"
+        self.title = f"¡{species}!"
         self.note = None  # set when found, e.g. to say it's new for the collection
         margin = 100
         for _ in range(100):
@@ -389,7 +391,7 @@ class HiddenDino:
             draw_cookie(surface, pygame.Vector2(x, bubble.centery), 16, ICON_CHIPS, colors)
             surface.blit(count, count.get_rect(midleft=(x + 24, bubble.centery)))
         if self.message_timer > 0:
-            lines = [(self.title, "hud", settings.TEXT_COLOR), (REWARD_TEXT[self.reward], "small", settings.TEXT_COLOR)]
-            if self.note:
-                lines.append((self.note, "small", settings.HIGHLIGHT_COLOR))
+            # Kept short for players who don't read quickly: the name, then what it gave.
+            detail = REWARD_TEXT[self.reward] + (f"   {self.note}" if self.note else "")
+            lines = [(self.title, "hud", settings.TEXT_COLOR), (detail, "small", settings.HIGHLIGHT_COLOR)]
             draw_banner(surface, fonts, lines)
