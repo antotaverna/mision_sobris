@@ -209,7 +209,7 @@ def draw_hair_front(surface, center, radius, kind, color):
     if kind == "long":
         # Straight-cut bangs across the forehead.
         old_clip = surface.get_clip()
-        surface.set_clip(pygame.Rect(cx - r * 1.2, cy - r * 1.2, r * 2.4, r * 0.82))
+        surface.set_clip(pygame.Rect(cx - r * 1.2, cy - r * 1.2, r * 2.4, r * 0.72))
         pygame.draw.circle(surface, color, center, r * 1.02)
         surface.set_clip(old_clip)
 
