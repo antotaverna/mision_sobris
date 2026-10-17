@@ -79,14 +79,16 @@ def draw_accessory(surface, center, radius, kind, color, facing):
     side = 1 if facing.x >= 0 else -1
     look = facing * r * 0.15  # same offset draw_eyes uses
     if kind == "cap":
-        # Dome on top of the cookie plus a brim pointing where the cookie looks.
-        dome = pygame.Rect(0, 0, r * 1.5, r * 1.1)
-        dome.midbottom = (cx, cy - r * 0.45)
-        pygame.draw.ellipse(surface, color, dome)
-        brim = pygame.Rect(0, 0, r * 0.95, r * 0.22)
-        brim.midleft = (cx + side * r * 0.1, cy - r * 0.5) if side > 0 else (cx - r * 1.05, cy - r * 0.5)
-        pygame.draw.rect(surface, color, brim, border_radius=round(r * 0.11))
-        pygame.draw.circle(surface, (255, 255, 255), (cx, dome.top + r * 0.08), r * 0.09)
+        # A snug cap hugging the top of the cookie, with a short brim where the cookie looks.
+        band_y = cy - r * 0.55
+        old_clip = surface.get_clip()
+        surface.set_clip(pygame.Rect(cx - r * 1.1, cy - r * 1.2, r * 2.2, band_y - (cy - r * 1.2)))
+        pygame.draw.circle(surface, color, (cx, cy + r * 0.05), r * 1.06)
+        surface.set_clip(old_clip)
+        brim = pygame.Rect(0, 0, r * 0.6, r * 0.16)
+        brim.midleft = (cx + r * 0.35, band_y) if side > 0 else (cx - r * 0.95, band_y)
+        pygame.draw.rect(surface, color, brim, border_radius=round(r * 0.08))
+        pygame.draw.circle(surface, (255, 255, 255), (cx, cy - r * 0.98), r * 0.08)
     elif kind == "headphones":
         band = pygame.Rect(0, 0, r * 2.3, r * 2.2)
         band.center = (cx, cy + r * 0.05)
