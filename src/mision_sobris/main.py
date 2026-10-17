@@ -6,8 +6,9 @@ import time
 import pygame
 
 from mision_sobris import settings
+from mision_sobris.collection import Collection
 from mision_sobris.entities import Chaser, Cookie, Player
-from mision_sobris.hidden import DINOSAURS, HiddenDino
+from mision_sobris.hidden import DINOSAURS, HiddenDino, draw_fossil_card
 
 # Running in the browser (built with pygbag), where there is no window to close.
 WEB = sys.platform == "emscripten"
@@ -24,7 +25,7 @@ for i, rect in enumerate(CHARACTER_RECTS):
     rect.center = (settings.WIDTH // 2 + (i - (len(CHARACTER_RECTS) - 1) / 2) * 225, 300)
 MODE_RECTS = [pygame.Rect(0, 0, 680, 80) for _ in MODES]
 for i, rect in enumerate(MODE_RECTS):
-    rect.center = (settings.WIDTH // 2, 262 + i * 100)
+    rect.center = (settings.WIDTH // 2, 195 + i * 90)
 CHANGE_CHARACTER_BUTTON = pygame.Rect(16, 16, 190, 44)
 MENU_BUTTON = pygame.Rect(0, 0, 110, 40)
 MENU_BUTTON.midtop = (settings.WIDTH // 2, 10)
@@ -41,9 +42,10 @@ TAP_COOLDOWN = 0.25  # seconds
 class Round:
     """One play-through of a mode, from start until time runs out or the player is caught."""
 
-    def __init__(self, mode, character):
+    def __init__(self, mode, character, collection):
         self.mode = mode
         self.character = character
+        self.collection = collection
         self.challenge = mode == "challenge"
         self.player = Player(settings.WIDTH / 2, settings.HEIGHT / 2, character)
         self.cookies = [self.new_cookie() for _ in range(settings.COOKIE_COUNT)]
@@ -96,6 +98,12 @@ class Round:
         for find in self.hidden:
             if find.update(dt, self.player):
                 self.give_reward(find.reward)
+                if self.collection.add(self.character["name"], find.species):
+                    count = len(self.collection.of(self.character["name"]))
+                    if count == len(DINOSAURS):
+                        find.note = "¡Completaste la colección de fósiles!"
+                    else:
+                        find.note = f"¡Nuevo en tu colección! ({count} de {len(DINOSAURS)})"
 
         for chaser in self.chasers:
             chaser.update(dt, self.player.pos)
@@ -175,10 +183,10 @@ def draw_character_select(screen, fonts, highlighted):
     draw_centered(screen, fonts["small"], hint, settings.HEIGHT - 40)
 
 
-def draw_mode_menu(screen, fonts, character, selected):
+def draw_mode_menu(screen, fonts, character, selected, collection):
     screen.fill(settings.BG_COLOR)
     greeting = fonts["title"].render(f"¡Hola, {character['name']}!", True, settings.TEXT_COLOR)
-    greeting_rect = greeting.get_rect(center=(settings.WIDTH / 2 + 40, 140))
+    greeting_rect = greeting.get_rect(center=(settings.WIDTH / 2 + 40, 100))
     screen.blit(greeting, greeting_rect)
     draw_character(screen, character, (greeting_rect.left - 60, greeting_rect.centery), 40)
     for i, ((_, name, description), rect) in enumerate(zip(MODES, MODE_RECTS)):
@@ -187,12 +195,19 @@ def draw_mode_menu(screen, fonts, character, selected):
         draw_centered(screen, fonts["hud"], f"{i + 1}. {name}", rect.centery - 16, color)
         draw_centered(screen, fonts["small"], description, rect.centery + 18)
     draw_button(screen, fonts["small"], CHANGE_CHARACTER_BUTTON, "Cambiar sobri")
+
+    found = collection.of(character["name"])
+    draw_centered(screen, fonts["small"], f"Mis fósiles: {len(found)} de {len(DINOSAURS)}", 360)
+    for i, species in enumerate(DINOSAURS):
+        x = settings.WIDTH / 2 + (i - (len(DINOSAURS) - 1) / 2) * 160
+        draw_fossil_card(screen, (x, 400), species, species in found, fonts["tiny"])
+
     if WEB:
-        draw_centered(screen, fonts["small"], "Mantené el dedo apretado para mover la galletita", settings.HEIGHT - 70)
-        draw_centered(screen, fonts["small"], "Tocá un modo para jugar", settings.HEIGHT - 40)
+        draw_centered(screen, fonts["small"], "Mantené el dedo apretado para mover la galletita", settings.HEIGHT - 52)
+        draw_centered(screen, fonts["small"], "Tocá un modo para jugar", settings.HEIGHT - 24)
     else:
         draw_centered(screen, fonts["small"], "Hacé clic en un modo o usá Arriba/Abajo + Enter    Esc: cambiar sobri",
-                      settings.HEIGHT - 40)
+                      settings.HEIGHT - 24)
 
 
 async def run():
@@ -208,8 +223,10 @@ async def run():
         "title": pygame.font.Font(None, 72),
         "hud": pygame.font.Font(None, 40),
         "small": pygame.font.Font(None, 28),
+        "tiny": pygame.font.Font(None, 22),
     }
 
+    collection = Collection()
     character = None  # the chosen character, or None while picking one
     highlighted = 0  # character highlighted with the keyboard
     selected = 0  # mode highlighted with the keyboard
@@ -261,13 +278,13 @@ async def run():
                     selected = (selected + 1) % len(MODES)
                 elif event.key in (pygame.K_1, pygame.K_2):
                     selected = event.key - pygame.K_1
-                    current = Round(MODES[selected][0], character)
+                    current = Round(MODES[selected][0], character, collection)
                 elif event.key in (pygame.K_RETURN, pygame.K_SPACE):
-                    current = Round(MODES[selected][0], character)
+                    current = Round(MODES[selected][0], character, collection)
             elif event.key == pygame.K_ESCAPE:
                 current = None
             elif current.result and event.key in (pygame.K_RETURN, pygame.K_SPACE):
-                current = Round(current.mode, character)
+                current = Round(current.mode, character, collection)
 
         now = time.monotonic()
         if tap is not None and now - last_tap > TAP_COOLDOWN:
@@ -283,10 +300,10 @@ async def run():
                 for i, rect in enumerate(MODE_RECTS):
                     if character and rect.collidepoint(tap):
                         selected = i
-                        current = Round(MODES[i][0], character)
+                        current = Round(MODES[i][0], character, collection)
             elif current.result:
                 if PLAY_AGAIN_BUTTON.collidepoint(tap):
-                    current = Round(current.mode, character)
+                    current = Round(current.mode, character, collection)
                 elif BACK_BUTTON.collidepoint(tap):
                     current = None
             elif MENU_BUTTON.collidepoint(tap):
@@ -296,7 +313,7 @@ async def run():
         if character is None:
             draw_character_select(screen, fonts, highlighted)
         elif current is None:
-            draw_mode_menu(screen, fonts, character, selected)
+            draw_mode_menu(screen, fonts, character, selected, collection)
         else:
             current.update(dt, pointer)
             current.draw(screen, fonts)

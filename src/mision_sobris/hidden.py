@@ -146,6 +146,24 @@ def draw_dino_fossil(surface, center, species):
     DINOSAURS[species](surface, pygame.Vector2(center) + (0, -4))
 
 
+def draw_fossil_card(surface, center, species, found, font):
+    """A small fossil for the collection, or a buried "?" if it hasn't been found yet."""
+    if found:
+        big = pygame.Surface((210, 110), pygame.SRCALPHA)
+        draw_dino_fossil(big, (105, 55), species)
+        small = pygame.transform.smoothscale(big, (105, 55))
+        surface.blit(small, small.get_rect(center=center))
+    else:
+        patch = pygame.Rect(0, 0, 100, 50)
+        patch.center = center
+        pygame.draw.ellipse(surface, (215, 195, 165), patch)
+        pygame.draw.ellipse(surface, (190, 165, 130), patch, 3)
+        mark = font.render("?", True, (160, 130, 95))
+        surface.blit(mark, mark.get_rect(center=center))
+    label = font.render(species if found else "???", True, settings.TEXT_COLOR)
+    surface.blit(label, label.get_rect(center=(center[0], center[1] + 42)))
+
+
 # What each find gives, and the line shown when it's found.
 REWARD_TEXT = {
     "hat": "Ganaste un sombrero de arqueología",
@@ -160,6 +178,7 @@ class HiddenDino:
         self.reward = reward
         self.species = species
         self.title = f"¡Encontraste un {species}!"
+        self.note = None  # set when found, e.g. to say it's new for the collection
         margin = 100
         for _ in range(100):
             self.pos = pygame.Vector2(
@@ -217,11 +236,14 @@ class HiddenDino:
         for pos, _, _ in self.flying_dirt:
             pygame.draw.circle(surface, DIRT_DARK, pos, 4)
         if self.message_timer > 0:
-            banner = pygame.Rect(0, 0, 680, 96)
-            banner.center = (settings.WIDTH / 2, settings.HEIGHT - 70)
+            lines = [(self.title, fonts["hud"], settings.TEXT_COLOR),
+                     (REWARD_TEXT[self.reward], fonts["small"], settings.TEXT_COLOR)]
+            if self.note:
+                lines.append((self.note, fonts["small"], settings.HIGHLIGHT_COLOR))
+            banner = pygame.Rect(0, 0, 680, 40 + 32 * len(lines))
+            banner.midbottom = (settings.WIDTH / 2, settings.HEIGHT - 16)
             pygame.draw.rect(surface, settings.BG_COLOR, banner, border_radius=16)
             pygame.draw.rect(surface, settings.HIGHLIGHT_COLOR, banner, 4, border_radius=16)
-            for text, font, y in ((self.title, fonts["hud"], banner.centery - 18),
-                                  (REWARD_TEXT[self.reward], fonts["small"], banner.centery + 20)):
-                rendered = font.render(text, True, settings.TEXT_COLOR)
-                surface.blit(rendered, rendered.get_rect(center=(banner.centerx, y)))
+            for i, (text, font, color) in enumerate(lines):
+                rendered = font.render(text, True, color)
+                surface.blit(rendered, rendered.get_rect(center=(banner.centerx, banner.top + 34 + i * 32)))
