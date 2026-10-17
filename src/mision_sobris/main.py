@@ -286,7 +286,7 @@ def draw_progress_panel(screen, fonts, character, collection):
 def draw_character_select(screen, fonts, highlighted):
     screen.fill(settings.BG_COLOR)
     draw_centered(screen, fonts["title"], settings.TITLE, 110)
-    draw_centered(screen, fonts["hud"], "¿Quién sos?", 190)
+    draw_centered(screen, fonts["hud"], "Elegí tu galletita", 190)
     for i, (character, rect) in enumerate(zip(settings.CHARACTERS, CHARACTER_RECTS)):
         color = settings.HIGHLIGHT_COLOR if i == highlighted else settings.TEXT_COLOR
         pygame.draw.rect(screen, color, rect, width=3, border_radius=16)
