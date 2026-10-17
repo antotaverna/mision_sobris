@@ -47,3 +47,10 @@ CHALLENGE_TIME = 20  # seconds
 CHASER_RADIUS = 34
 CHASER_SPEEDS = (70, 115)  # pixels per second; one chaser per entry
 CHASER_SPAWN_DISTANCE = 300  # minimum distance from the player when spawning
+
+# Hidden finds (Classic mode)
+HIDDEN_FIND_DISTANCE = 30  # how close the player's center must get to dig something up
+HIDDEN_HINT_DISTANCE = 130  # within this distance a few dirt specks start to show
+HIDDEN_DIG_TIME = 1.0  # seconds of flying dirt before the find shows up
+HIDDEN_MESSAGE_TIME = 3.5  # seconds the "you found..." banner stays up
+EXPLORER_HAT_COLOR = (195, 160, 100)

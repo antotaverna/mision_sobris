@@ -7,6 +7,7 @@ import pygame
 
 from mision_sobris import settings
 from mision_sobris.entities import Chaser, Cookie, Player
+from mision_sobris.hidden import HiddenDino
 
 # Running in the browser (built with pygbag), where there is no window to close.
 WEB = sys.platform == "emscripten"
@@ -55,6 +56,8 @@ class Round:
         else:
             self.chasers = []
             self.time_left = None
+        # Classic mode hides things in the floor to find by walking over them.
+        self.hidden = [] if self.challenge else [HiddenDino(self.player.pos)]
 
     def new_cookie(self, burnt=False):
         return Cookie(self.player.pos, self.player.radius, burnt)
@@ -72,6 +75,12 @@ class Round:
                 if not cookie.burnt:
                     self.score += 1
 
+        for find in self.hidden:
+            if find.update(dt, self.player):
+                # The reward: an archaeologist's hat for the rest of the round.
+                self.player.character = {**self.player.character, "accessory": "explorer_hat",
+                                         "accent": settings.EXPLORER_HAT_COLOR}
+
         for chaser in self.chasers:
             chaser.update(dt, self.player.pos)
             if chaser.touches(self.player):
@@ -84,11 +93,15 @@ class Round:
 
     def draw(self, screen, fonts):
         screen.fill(settings.BG_COLOR)
+        for find in self.hidden:
+            find.draw(screen, self.player)
         for cookie in self.cookies:
             cookie.draw(screen)
         self.player.draw(screen)
         for chaser in self.chasers:
             chaser.draw(screen)
+        for find in self.hidden:
+            find.draw_effects(screen, fonts)
 
         screen.blit(fonts["hud"].render(f"Galletitas: {self.score}", True, settings.TEXT_COLOR), (16, 12))
         cheer = fonts["small"].render(f"¡Vamos, {self.character['name']}!", True, settings.HIGHLIGHT_COLOR)

@@ -92,6 +92,18 @@ def draw_accessory(surface, center, radius, kind, color, facing):
         band = pygame.Rect(0, 0, r * 2.0, r * 2.0)
         band.center = (cx, cy)
         pygame.draw.arc(surface, color, band, math.radians(25), math.radians(155), max(3, round(r * 0.12)))
+    elif kind == "explorer_hat":
+        # Wide-brimmed archaeologist hat with a dark band.
+        brim = pygame.Rect(0, 0, r * 2.1, r * 0.4)
+        brim.center = (cx, cy - r * 0.72)
+        pygame.draw.ellipse(surface, color, brim)
+        pygame.draw.ellipse(surface, tuple(round(c * 0.8) for c in color), brim, max(1, round(r * 0.05)))
+        dome = pygame.Rect(0, 0, r * 1.25, r * 0.9)
+        dome.midbottom = (cx, cy - r * 0.68)
+        pygame.draw.ellipse(surface, color, dome)
+        band = pygame.Rect(0, 0, r * 1.22, r * 0.18)
+        band.midbottom = (cx, cy - r * 0.78)
+        pygame.draw.rect(surface, (90, 55, 30), band)
     elif kind == "headphones":
         band = pygame.Rect(0, 0, r * 2.3, r * 2.2)
         band.center = (cx, cy + r * 0.05)
