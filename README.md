@@ -28,7 +28,7 @@ First pick a character (Juani, Lucha, Male, or Juli; they're defined in `CHARACT
   at the wrong size marks the spot and says what's needed. Once both are dug up, two more get buried. Dinosaurs a player is still missing get buried first, and
   completing all four earns a medal and starts the collection over. Each player's fossils,
   prizes, and medals are shown in a bar along the bottom of the screen, along with how the others are doing, and kept
-  between games (the small "Borrar progreso" button on the character select clears everyone's, after asking) (in `~/.mision_sobris.json` on desktop, in the browser's
+  between games (the small "Borrar mi progreso" button on each player's menu clears theirs, after asking) (in `~/.mision_sobris.json` on desktop, in the browser's
   local storage on the web).
 - **Challenge**: 20 seconds to eat as many as you can, with burnt cookies too, while
   big angry cookies chase you (one slow, one fast); if one catches you, the round ends.

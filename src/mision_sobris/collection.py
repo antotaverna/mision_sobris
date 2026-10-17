@@ -46,9 +46,9 @@ class Collection:
         except Exception:
             pass  # not being able to save shouldn't stop the game
 
-    def reset(self):
-        """Forget everyone's fossils, prizes, and medals."""
-        self.found = {}
+    def reset(self, name):
+        """Forget one player's fossils, prizes, and medals."""
+        self.found.pop(name, None)
         self._save()
 
     def fossils(self, name):
