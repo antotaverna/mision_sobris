@@ -88,14 +88,9 @@ class Round:
         random.shuffle(missing)
         random.shuffle(others)
         species = (missing + others)[:2]
-        # Some finds need the cookie to be big or small; always for hard_finds characters,
-        # at most one of the two for everyone else.
+        # hard_finds characters can only dig each one up when the cookie is big or small.
         hard = character.get("hard_finds", False)
-        if hard:
-            needs = [random.choice(("big", "small")) for _ in species]
-        else:
-            needs = [None] * len(species)
-            needs[random.randrange(len(needs))] = random.choice((None, "big", "small"))
+        needs = [random.choice(("big", "small")) if hard else None for _ in species]
         self.hidden = []
         for reward, kind, need in zip(("hat", "magnifier"), species, needs):
             avoid = [self.player.pos] + [find.pos for find in self.hidden]
