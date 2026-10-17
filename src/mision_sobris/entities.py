@@ -144,9 +144,9 @@ def draw_hair(surface, center, radius, kind):
                 pygame.draw.arc(surface, (185, 130, 30), ring, 0.5, 5.5, max(1, round(r * 0.05)))
 
         # A short curl on each side, just above each ringlet.
-        for angle in (5, 175):
+        for angle in (18, 162):
             a = math.radians(angle)
-            curl = pygame.Vector2(center) + pygame.Vector2(math.cos(a), math.sin(a)) * r * 0.98
+            curl = pygame.Vector2(center) + pygame.Vector2(math.cos(a), math.sin(a)) * r * 0.9
             pygame.draw.circle(surface, (240, 195, 70), curl, r * 0.2)
             ring = pygame.Rect(0, 0, r * 0.24, r * 0.24)
             ring.center = curl
