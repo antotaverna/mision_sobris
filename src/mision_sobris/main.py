@@ -293,11 +293,6 @@ def draw_character_select(screen, fonts, highlighted):
         draw_character(screen, character, (rect.centerx, rect.top + 125), 65)
         name = fonts["hud"].render(character["name"], True, color)
         screen.blit(name, name.get_rect(center=(rect.centerx, rect.bottom - 40)))
-    if WEB:
-        draw_centered(screen, fonts["small"], "Tocá tu galletita", settings.HEIGHT - 50)
-    else:
-        draw_centered(screen, fonts["small"], "Clic en tu galletita o flechas + Enter", settings.HEIGHT - 64)
-        draw_centered(screen, fonts["small"], "Esc: salir", settings.HEIGHT - 36)
     draw_character(screen, settings.SECRET_CHARACTER, SECRET_SPOT, 34)
 
 

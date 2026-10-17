@@ -3,6 +3,7 @@ WIDTH = 540
 HEIGHT = 960
 PANEL_HEIGHT = 222  # progress bar along the bottom during a round
 PLAY_HEIGHT = HEIGHT - PANEL_HEIGHT  # where the cookies can be
+HUD_HEIGHT = 90  # the score and menu button along the top of a round
 FPS = 60
 TITLE = "Misión Sobris"
 

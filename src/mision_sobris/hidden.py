@@ -6,8 +6,9 @@ import random
 import pygame
 
 from mision_sobris import settings
-from mision_sobris.entities import draw_accessory, draw_held
+from mision_sobris.entities import draw_accessory, draw_cookie, draw_held, rim_chips
 
+ICON_CHIPS = rim_chips(4)  # for the little cookie pictures in hint bubbles
 DIRT_COLOR = (150, 105, 60)
 DIRT_DARK = (115, 75, 40)
 BONE_COLOR = (245, 238, 215)
@@ -263,13 +264,11 @@ class HiddenDino:
             return player.radius <= settings.HIDDEN_SMALL_RADIUS
         return True
 
-    def need_text(self, player):
-        """What the player still has to do to dig it up, as shown to players."""
+    def cookies_needed(self, player):
+        """How many more cookies (or burnt ones, for "small") until the right size."""
         if self.need == "big":
-            count = math.ceil((settings.HIDDEN_BIG_RADIUS - player.radius) / settings.PLAYER_GROWTH)
-            return "¡Necesitás ser más grande!", f"Comé {count} galletita{'s' if count > 1 else ''} más"
-        count = math.ceil((player.radius - settings.HIDDEN_SMALL_RADIUS) / settings.BURNT_SHRINK)
-        return "¡Necesitás achicarte!", f"Comé {count} quemada{'s' if count > 1 else ''} más"
+            return math.ceil((settings.HIDDEN_BIG_RADIUS - player.radius) / settings.PLAYER_GROWTH)
+        return math.ceil((player.radius - settings.HIDDEN_SMALL_RADIUS) / settings.BURNT_SHRINK)
 
     def update(self, dt, player):
         """Returns True on the frame the find is fully dug up."""
@@ -336,16 +335,26 @@ class HiddenDino:
         for pos, _, _ in self.flying_dirt:
             pygame.draw.circle(surface, DIRT_DARK, pos, 4)
         if not self.found and self.marked and self.pos.distance_to(player.pos) < 110:
-            title, detail = self.need_text(player)
-            title = fonts["small"].render(title, True, settings.HIGHLIGHT_COLOR)
-            detail = fonts["tiny"].render(detail, True, settings.TEXT_COLOR)
-            bubble = pygame.Rect(0, 0, max(title.get_width(), detail.get_width()) + 28, 58)
-            bubble.midbottom = (self.pos.x, self.pos.y - 52)
-            bubble.clamp_ip(pygame.Rect(0, 0, settings.WIDTH, settings.PLAY_HEIGHT))
-            pygame.draw.rect(surface, settings.CARD_COLOR, bubble, border_radius=12)
-            pygame.draw.rect(surface, settings.HIGHLIGHT_COLOR, bubble, 3, border_radius=12)
-            surface.blit(title, title.get_rect(center=(bubble.centerx, bubble.top + 19)))
-            surface.blit(detail, detail.get_rect(center=(bubble.centerx, bubble.top + 41)))
+            # Pictures instead of words, for players who don't read yet: "+ cookie x3" to grow,
+            # "- burnt cookie x2" to shrink.
+            big = self.need == "big"
+            sign = fonts["title"].render("+" if big else "−", True, (60, 160, 70) if big else (50, 110, 200))
+            count = fonts["hud"].render(f"x{self.cookies_needed(player)}", True, settings.TEXT_COLOR)
+            bubble = pygame.Rect(0, 0, sign.get_width() + count.get_width() + 76, 56)
+            bubble.midbottom = (self.pos.x, self.pos.y - 50)
+            # Keep clear of the score and menu button at the top; if there's no room above, go below.
+            room = pygame.Rect(0, settings.HUD_HEIGHT, settings.WIDTH, settings.PLAY_HEIGHT - settings.HUD_HEIGHT)
+            if bubble.top < room.top:
+                bubble.midtop = (self.pos.x, self.pos.y + 24)
+            bubble.clamp_ip(room)
+            pygame.draw.rect(surface, settings.CARD_COLOR, bubble, border_radius=14)
+            pygame.draw.rect(surface, settings.HIGHLIGHT_COLOR, bubble, 3, border_radius=14)
+            x = bubble.left + 14
+            surface.blit(sign, sign.get_rect(midleft=(x, bubble.centery + 2)))
+            x += sign.get_width() + 22
+            colors = settings.COOKIE_COLORS if big else settings.BURNT_COLORS
+            draw_cookie(surface, pygame.Vector2(x, bubble.centery), 16, ICON_CHIPS, colors)
+            surface.blit(count, count.get_rect(midleft=(x + 24, bubble.centery)))
         if self.message_timer > 0:
             lines = [(self.title, "hud", settings.TEXT_COLOR), (REWARD_TEXT[self.reward], "small", settings.TEXT_COLOR)]
             if self.note:
