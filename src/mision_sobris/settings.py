@@ -20,9 +20,9 @@ CHASER_COLORS = ((120, 60, 30), (175, 95, 50), (60, 25, 10))
 CHARACTERS = [
     {"name": "Juani", "colors": ((80, 45, 25), (115, 70, 40), (245, 235, 220)),  # chocolate
      "accessory": "spider", "accent": (205, 25, 35)},
-    {"name": "Lucha", "colors": ((200, 110, 130), (240, 170, 185), (175, 35, 65)),  # strawberry
+    {"name": "Lucha", "colors": ((205, 170, 110), (250, 228, 175), (90, 55, 25)),  # vanilla
      "accessory": "cap", "accent": (40, 150, 70), "hair": "curls"},
-    {"name": "Male", "colors": ((205, 170, 110), (250, 228, 175), (90, 55, 25)),  # vanilla
+    {"name": "Male", "colors": ((200, 110, 130), (240, 170, 185), (175, 35, 65)),  # strawberry
      "accessory": "headphones", "accent": (130, 60, 190), "ride": "skateboard"},
     {"name": "Juli", "colors": ((150, 90, 40), (200, 135, 70), (105, 55, 20)),  # dulce de leche
      "accessory": "crown", "accent": (235, 185, 40)},
