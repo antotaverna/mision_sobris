@@ -25,7 +25,7 @@ First pick a character (Juani, Lucha, Male, or Juli; they're defined in `CHARACT
   Triceratops, a Brontosaurus, and a Stegosaurus) are buried in the floor: walk over one to dig it up. One gives an explorer hat, the other a magnifying glass (a few dirt
   specks show up when you get close). Dinosaurs a player is still missing get buried first, and
   completing all four earns a medal and starts the collection over. Each player's fossils,
-  prizes, and medals are shown in a panel beside the play area, along with how the others are doing, and kept
+  prizes, and medals are shown in a bar along the bottom of the screen, along with how the others are doing, and kept
   between games (the small "Borrar progreso" button on the character select clears everyone's, after asking) (in `~/.mision_sobris.json` on desktop, in the browser's
   local storage on the web).
 - **Challenge**: 20 seconds to eat as many as you can, with burnt cookies too, while

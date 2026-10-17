@@ -1,7 +1,7 @@
 WIDTH = 960
 HEIGHT = 540
-PANEL_WIDTH = 230  # progress panel on the right during a round
-PLAY_WIDTH = WIDTH - PANEL_WIDTH  # where the cookies can be
+PANEL_HEIGHT = 112  # progress bar along the bottom during a round
+PLAY_HEIGHT = HEIGHT - PANEL_HEIGHT  # where the cookies can be
 FPS = 60
 TITLE = "Misión Sobris"
 
