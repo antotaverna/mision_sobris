@@ -213,7 +213,7 @@ class HiddenDino:
         margin = 100
         for _ in range(100):
             self.pos = pygame.Vector2(
-                random.uniform(margin, settings.WIDTH - margin),
+                random.uniform(margin, settings.PLAY_WIDTH - margin),
                 random.uniform(margin + 40, settings.HEIGHT - margin),
             )
             if all(self.pos.distance_to(avoid) > 250 for avoid in avoid_positions):
@@ -272,7 +272,7 @@ class HiddenDino:
             if self.note:
                 lines.append((self.note, fonts["small"], settings.HIGHLIGHT_COLOR))
             banner = pygame.Rect(0, 0, 680, 40 + 32 * len(lines))
-            banner.midbottom = (settings.WIDTH / 2, settings.HEIGHT - 16)
+            banner.midbottom = (settings.PLAY_WIDTH / 2, settings.HEIGHT - 16)
             pygame.draw.rect(surface, settings.BG_COLOR, banner, border_radius=16)
             pygame.draw.rect(surface, settings.HIGHLIGHT_COLOR, banner, 4, border_radius=16)
             for i, (text, font, color) in enumerate(lines):

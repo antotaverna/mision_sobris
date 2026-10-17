@@ -21,15 +21,15 @@ MODES = [
 ]
 
 # Tappable areas, for touch screens and the mouse.
-CHARACTER_RECTS = [pygame.Rect(0, 0, 210, 330) for _ in settings.CHARACTERS]
+CHARACTER_RECTS = [pygame.Rect(0, 0, 200, 250) for _ in settings.CHARACTERS]
 for i, rect in enumerate(CHARACTER_RECTS):
-    rect.center = (settings.WIDTH // 2 + (i - (len(CHARACTER_RECTS) - 1) / 2) * 228, 306)
+    rect.center = (settings.WIDTH // 2 + (i - (len(CHARACTER_RECTS) - 1) / 2) * 225, 300)
 MODE_RECTS = [pygame.Rect(0, 0, 680, 80) for _ in MODES]
 for i, rect in enumerate(MODE_RECTS):
     rect.center = (settings.WIDTH // 2, 262 + i * 100)
 CHANGE_CHARACTER_BUTTON = pygame.Rect(16, 16, 190, 44)
 MENU_BUTTON = pygame.Rect(0, 0, 110, 40)
-MENU_BUTTON.midtop = (settings.WIDTH // 2, 10)
+MENU_BUTTON.midtop = (settings.PLAY_WIDTH // 2, 10)
 PLAY_AGAIN_BUTTON = pygame.Rect(0, 0, 220, 60)
 PLAY_AGAIN_BUTTON.center = (settings.WIDTH // 2 - 130, settings.HEIGHT // 2 + 90)
 BACK_BUTTON = pygame.Rect(0, 0, 220, 60)
@@ -56,7 +56,7 @@ class Round:
         self.character = character
         self.collection = collection
         self.challenge = mode == "challenge"
-        self.player = Player(settings.WIDTH / 2, settings.HEIGHT / 2, character)
+        self.player = Player(settings.PLAY_WIDTH / 2, settings.HEIGHT / 2, character)
         self.cookies = [self.new_cookie() for _ in range(settings.COOKIE_COUNT)]
         self.cookies += [self.new_cookie(burnt=True) for _ in range(settings.BURNT_COUNT)]
         self.score = 0
@@ -147,6 +147,7 @@ class Round:
             chaser.draw(screen)
         for find in self.hidden:
             find.draw_effects(screen, fonts)
+        draw_progress_panel(screen, fonts, self.character, self.collection)
 
         screen.blit(fonts["hud"].render(f"Galletitas: {self.score}", True, settings.TEXT_COLOR), (16, 12))
         cheer = fonts["small"].render(f"¡Vamos, {self.character['name']}!", True, settings.HIGHLIGHT_COLOR)
@@ -154,7 +155,7 @@ class Round:
         if self.time_left is not None:
             color = settings.HIGHLIGHT_COLOR if self.time_left < 5 else settings.TEXT_COLOR
             timer = fonts["hud"].render(f"Tiempo: {self.time_left:4.1f}", True, color)
-            screen.blit(timer, timer.get_rect(topright=(settings.WIDTH - 16, 12)))
+            screen.blit(timer, timer.get_rect(topright=(settings.PLAY_WIDTH - 16, 12)))
 
         if self.result:
             overlay = pygame.Surface((settings.WIDTH, settings.HEIGHT), pygame.SRCALPHA)
@@ -190,30 +191,64 @@ def draw_character(screen, character, center, radius):
     portrait.draw(screen)
 
 
-def draw_character_select(screen, fonts, highlighted, collection, confirm_reset):
+def draw_progress_panel(screen, fonts, character, collection):
+    """The side panel during a round: this player's fossils, prizes, and medals, and how the others are doing."""
+    panel = pygame.Rect(settings.PLAY_WIDTH, 0, settings.PANEL_WIDTH, settings.HEIGHT)
+    pygame.draw.rect(screen, settings.PANEL_COLOR, panel)
+    pygame.draw.line(screen, settings.TEXT_COLOR, panel.topleft, panel.bottomleft, 3)
+    x = panel.centerx
+    total = len(DINOSAURS)
+
+    def text(message, font, center, color=settings.TEXT_COLOR):
+        rendered = fonts[font].render(message, True, color)
+        screen.blit(rendered, rendered.get_rect(center=center))
+
+    name = character["name"]
+    fossils = collection.fossils(name)
+    text(f"Fósiles de {name}", "small", (x, 22))
+    for j, species in enumerate(DINOSAURS):
+        spot = (panel.left + 58, 62 + j * 46)
+        draw_fossil_card(screen, spot, species, species in fossils, fonts["tiny"], scale=0.38)
+        label = fonts["tiny"].render(species if species in fossils else "???", True, settings.TEXT_COLOR)
+        screen.blit(label, label.get_rect(midleft=(panel.left + 104, spot[1])))
+    missing = total - len(fossils)
+    text(f"Tenés {len(fossils)} de {total}", "small", (x, 254))
+    text(f"Te faltan {missing}" if missing else "¡Los tenés todos!", "tiny", (x, 278), settings.HIGHLIGHT_COLOR)
+
+    rewards = collection.rewards(name)
+    for j, reward in enumerate(REWARD_NAMES):
+        draw_reward_icon(screen, (x + (j - 0.5) * 92, 322), reward, reward in rewards, fonts["tiny"])
+    medals = collection.medals(name)
+    draw_medal(screen, (x - 66, 382), 10)
+    text(f"Medallas: {medals}", "tiny", (x + 8, 380))
+
+    pygame.draw.line(screen, settings.TEXT_COLOR, (panel.left + 16, 404), (panel.right - 16, 404), 1)
+    text("Los demás", "small", (x, 422))
+    others = [other for other in settings.CHARACTERS if other["name"] != name]
+    for j, other in enumerate(others):
+        y = 452 + j * 30
+        draw_character(screen, other, (panel.left + 26, y), 11)
+        label = fonts["tiny"].render(other["name"], True, settings.TEXT_COLOR)
+        screen.blit(label, label.get_rect(midleft=(panel.left + 46, y)))
+        count = fonts["tiny"].render(f"{len(collection.fossils(other['name']))}/{total}", True, settings.TEXT_COLOR)
+        screen.blit(count, count.get_rect(midright=(panel.right - 58, y)))
+        other_medals = collection.medals(other["name"])
+        if other_medals:
+            draw_medal(screen, (panel.right - 40, y + 2), 7)
+            mark = fonts["tiny"].render(f"x{other_medals}", True, settings.TEXT_COLOR)
+            screen.blit(mark, mark.get_rect(midleft=(panel.right - 30, y)))
+
+
+def draw_character_select(screen, fonts, highlighted, confirm_reset):
     screen.fill(settings.BG_COLOR)
-    draw_centered(screen, fonts["title"], settings.TITLE, 50)
-    draw_centered(screen, fonts["hud"], "¿Quién sos?", 106)
+    draw_centered(screen, fonts["title"], settings.TITLE, 70)
+    draw_centered(screen, fonts["hud"], "¿Quién sos?", 135)
     for i, (character, rect) in enumerate(zip(settings.CHARACTERS, CHARACTER_RECTS)):
         color = settings.HIGHLIGHT_COLOR if i == highlighted else settings.TEXT_COLOR
         pygame.draw.rect(screen, color, rect, width=3, border_radius=16)
-        draw_character(screen, character, (rect.centerx, rect.top + 72), 46)
+        draw_character(screen, character, (rect.centerx, rect.top + 105), 55)
         name = fonts["hud"].render(character["name"], True, color)
-        screen.blit(name, name.get_rect(center=(rect.centerx, rect.top + 148)))
-        # This sobri's fossil collection and the prizes they've won.
-        fossils = collection.fossils(character["name"])
-        for j, species in enumerate(DINOSAURS):
-            spot = (rect.centerx + (j % 2 - 0.5) * 94, rect.top + 184 + j // 2 * 44)
-            draw_fossil_card(screen, spot, species, species in fossils, fonts["tiny"], scale=0.4)
-        rewards = collection.rewards(character["name"])
-        for j, reward in enumerate(REWARD_NAMES):
-            spot = (rect.centerx + (j - 0.5) * 94, rect.top + 284)
-            draw_reward_icon(screen, spot, reward, reward in rewards, fonts["tiny"])
-        medals = collection.medals(character["name"])
-        if medals:
-            draw_medal(screen, (rect.right - 30, rect.top + 38), 14)
-            count = fonts["small"].render(f"x{medals}", True, settings.TEXT_COLOR)
-            screen.blit(count, count.get_rect(center=(rect.right - 30, rect.top + 68)))
+        screen.blit(name, name.get_rect(center=(rect.centerx, rect.bottom - 35)))
     hint = "Tocá tu galletita" if WEB else "Hacé clic en tu galletita o usá Izq/Der + Enter    Esc: salir"
     draw_centered(screen, fonts["small"], hint, settings.HEIGHT - 40)
 
@@ -368,7 +403,7 @@ async def run():
                 pointer = None
 
         if character is None:
-            draw_character_select(screen, fonts, highlighted, collection, confirm_reset)
+            draw_character_select(screen, fonts, highlighted, confirm_reset)
         elif current is None:
             draw_mode_menu(screen, fonts, character, selected)
         else:

@@ -1,5 +1,7 @@
 WIDTH = 960
 HEIGHT = 540
+PANEL_WIDTH = 230  # progress panel on the right during a round
+PLAY_WIDTH = WIDTH - PANEL_WIDTH  # where the cookies can be
 FPS = 60
 TITLE = "Misión Sobris"
 
@@ -7,6 +9,7 @@ BG_COLOR = (250, 236, 214)
 TEXT_COLOR = (90, 55, 30)
 HIGHLIGHT_COLOR = (200, 90, 40)
 OVERLAY_COLOR = (250, 236, 214, 210)
+PANEL_COLOR = (238, 218, 188)
 
 # Cookie palettes: (edge, dough, chips)
 COOKIE_COLORS = ((160, 105, 50), (214, 160, 90), (70, 40, 20))

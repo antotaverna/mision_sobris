@@ -50,7 +50,7 @@ def random_position(radius, avoid_pos, min_distance):
     margin = radius + 10
     for _ in range(100):
         pos = pygame.Vector2(
-            random.uniform(margin, settings.WIDTH - margin),
+            random.uniform(margin, settings.PLAY_WIDTH - margin),
             random.uniform(margin, settings.HEIGHT - margin),
         )
         if pos.distance_to(avoid_pos) > min_distance:
@@ -229,7 +229,7 @@ class Player:
             direction = direction.normalize()
             self.facing = direction
         self.pos += direction * step
-        self.pos.x = max(self.radius, min(settings.WIDTH - self.radius, self.pos.x))
+        self.pos.x = max(self.radius, min(settings.PLAY_WIDTH - self.radius, self.pos.x))
         self.pos.y = max(self.radius, min(settings.HEIGHT - self.radius, self.pos.y))
         self.chomp_timer = max(0.0, self.chomp_timer - dt)
         self.yuck_timer = max(0.0, self.yuck_timer - dt)
