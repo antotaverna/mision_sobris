@@ -78,17 +78,20 @@ def draw_accessory(surface, center, radius, kind, color, facing):
     r = radius
     side = 1 if facing.x >= 0 else -1
     look = facing * r * 0.15  # same offset draw_eyes uses
-    if kind == "cap":
-        # A snug cap hugging the top of the cookie, with a short brim where the cookie looks.
-        band_y = cy - r * 0.55
-        old_clip = surface.get_clip()
-        surface.set_clip(pygame.Rect(cx - r * 1.1, cy - r * 1.2, r * 2.2, band_y - (cy - r * 1.2)))
-        pygame.draw.circle(surface, color, (cx, cy + r * 0.05), r * 1.06)
-        surface.set_clip(old_clip)
-        brim = pygame.Rect(0, 0, r * 0.6, r * 0.16)
-        brim.midleft = (cx + r * 0.35, band_y) if side > 0 else (cx - r * 0.95, band_y)
-        pygame.draw.rect(surface, color, brim, border_radius=round(r * 0.08))
-        pygame.draw.circle(surface, (255, 255, 255), (cx, cy - r * 0.98), r * 0.08)
+    if kind == "cat_ears":
+        # A headband with two pointy cat ears, lighter inside.
+        inner_color = tuple(round(c + (255 - c) * 0.55) for c in color)
+        for center_angle in (125, 55):
+            def ear_point(angle, distance):
+                a = math.radians(angle)
+                return (cx + math.cos(a) * r * distance, cy - math.sin(a) * r * distance)
+            pygame.draw.polygon(surface, color, [ear_point(center_angle - 17, 0.9), ear_point(center_angle, 1.5),
+                                                 ear_point(center_angle + 17, 0.9)])
+            pygame.draw.polygon(surface, inner_color, [ear_point(center_angle - 9, 1.0), ear_point(center_angle, 1.33),
+                                                       ear_point(center_angle + 9, 1.0)])
+        band = pygame.Rect(0, 0, r * 2.0, r * 2.0)
+        band.center = (cx, cy)
+        pygame.draw.arc(surface, color, band, math.radians(25), math.radians(155), max(3, round(r * 0.12)))
     elif kind == "headphones":
         band = pygame.Rect(0, 0, r * 2.3, r * 2.2)
         band.center = (cx, cy + r * 0.05)
@@ -129,30 +132,32 @@ def draw_accessory(surface, center, radius, kind, color, facing):
             pygame.draw.polygon(surface, (20, 20, 20), lens, max(2, round(r * 0.06)))
 
 
-def draw_hair(surface, center, radius, kind):
+def draw_hair(surface, center, radius, kind, color):
     """Draw hair peeking out from behind the cookie."""
     r = radius
+    shade = tuple(round(c * 0.75) for c in color)
     if kind == "curls":
-        # Two golden ringlets hanging from the nape, a few twists each.
+        # Two ringlets hanging from the nape, a few twists each.
         for angle in (35, 145):
             a = math.radians(angle)
             top = pygame.Vector2(center) + pygame.Vector2(math.cos(a), math.sin(a)) * r * 0.9
             for i in range(3):
                 size = r * (0.22 - i * 0.03)
                 curl = top + pygame.Vector2(math.copysign(i * r * 0.05, math.cos(a)), i * r * 0.22)
-                pygame.draw.circle(surface, (240, 195, 70), curl, size)
+                pygame.draw.circle(surface, color, curl, size)
                 ring = pygame.Rect(0, 0, size * 1.2, size * 1.2)
                 ring.center = curl
-                pygame.draw.arc(surface, (185, 130, 30), ring, 0.5, 5.5, max(1, round(r * 0.05)))
+                pygame.draw.arc(surface, shade, ring, 0.5, 5.5, max(1, round(r * 0.05)))
 
         # A short curl on each side, just above each ringlet.
         for angle in (18, 162):
             a = math.radians(angle)
             curl = pygame.Vector2(center) + pygame.Vector2(math.cos(a), math.sin(a)) * r * 0.9
-            pygame.draw.circle(surface, (240, 195, 70), curl, r * 0.2)
+            pygame.draw.circle(surface, color, curl, r * 0.2)
             ring = pygame.Rect(0, 0, r * 0.24, r * 0.24)
             ring.center = curl
-            pygame.draw.arc(surface, (185, 130, 30), ring, 0.5, 5.5, max(1, round(r * 0.05)))
+            pygame.draw.arc(surface, shade, ring, 0.5, 5.5, max(1, round(r * 0.05)))
+
 
 def draw_ride(surface, center, radius, kind):
     """Draw what a character rides on, sitting under the cookie."""
@@ -215,7 +220,7 @@ class Player:
         r = self.radius
         colors = self.character["colors"] if self.character else settings.COOKIE_COLORS
         if self.character and "hair" in self.character:
-            draw_hair(surface, self.pos, r, self.character["hair"])
+            draw_hair(surface, self.pos, r, self.character["hair"], self.character["hair_color"])
         draw_cookie(surface, self.pos, r, self.chips, colors)
         draw_eyes(surface, self.pos, r, self.facing)
 
