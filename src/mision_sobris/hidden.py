@@ -258,7 +258,7 @@ REWARD_NAMES = {"hat": "Sombrero", "magnifier": "Lupa"}
 REWARD_TEXT = {
     "hat": "Ganaste un sombrero de arqueología",
     "magnifier": "Ganaste una lupa de arqueología",
-    "argentine_medal": "Ganaste la medalla argentina",
+    "argentine_medal": "Ganaste la bandera y la medalla argentina",
 }
 
 

@@ -139,6 +139,8 @@ class Round:
             name = self.character["name"]
             if find.rare:
                 self.collection.add_rare(name)
+                # Carry the flag for the rest of the round.
+                self.player.character = {**self.player.character, "flag": True}
                 find.note = "¡Un dinosaurio gigante de Argentina!"
                 continue
             self.give_reward(find.reward)

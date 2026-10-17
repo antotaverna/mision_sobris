@@ -244,6 +244,26 @@ def draw_held(surface, center, radius, kind, facing):
         pygame.draw.circle(surface, (70, 70, 80), lens, r * 0.32, max(2, round(r * 0.08)))
 
 
+def draw_flag(surface, center, radius, facing):
+    """An Argentine flag on a pole, held up behind the cookie on the side away from where it looks."""
+    cx, cy = center
+    r = radius
+    side = -1 if facing.x >= 0 else 1
+    bottom = pygame.Vector2(cx + side * r * 0.8, cy + r * 0.3)
+    top = pygame.Vector2(cx + side * r * 0.8, cy - r * 1.55)
+    pygame.draw.line(surface, (120, 85, 50), bottom, top, max(2, round(r * 0.08)))
+    flag = pygame.Rect(0, 0, r * 1.0, r * 0.66)
+    if side > 0:
+        flag.topleft = top
+    else:
+        flag.topright = top
+    stripe = flag.height / 3
+    for i, color in enumerate(((116, 172, 223), (255, 255, 255), (116, 172, 223))):
+        pygame.draw.rect(surface, color, (flag.left, flag.top + i * stripe, flag.width, math.ceil(stripe)))
+    pygame.draw.circle(surface, (245, 180, 40), flag.center, max(2, r * 0.09))
+    pygame.draw.rect(surface, (90, 110, 140), flag, 1)
+
+
 class Player:
     def __init__(self, x, y, character=None):
         self.character = character
@@ -290,6 +310,8 @@ class Player:
         colors = self.character["colors"] if self.character else settings.COOKIE_COLORS
         if self.character and "hair" in self.character:
             draw_hair(surface, self.pos, r, self.character["hair"], self.character["hair_color"])
+        if self.character and self.character.get("flag"):
+            draw_flag(surface, self.pos, r, self.facing)
         draw_cookie(surface, self.pos, r, self.chips, colors)
         if self.character and "hair" in self.character:
             draw_hair_front(surface, self.pos, r, self.character["hair"], self.character["hair_color"])
