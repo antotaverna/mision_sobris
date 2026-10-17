@@ -131,14 +131,17 @@ def draw_hair(surface, center, radius, kind):
     """Draw hair peeking out from behind the cookie."""
     r = radius
     if kind == "curls":
-        # Golden curls down both sides and around the nape.
-        for angle in (5, 30, 55, 125, 150, 175):
+        # Two golden ringlets hanging from the nape, a few twists each.
+        for angle in (35, 145):
             a = math.radians(angle)
-            curl = pygame.Vector2(center) + pygame.Vector2(math.cos(a), math.sin(a)) * r * 0.98
-            pygame.draw.circle(surface, (240, 195, 70), curl, r * 0.24)
-            ring = pygame.Rect(0, 0, r * 0.26, r * 0.26)
-            ring.center = curl
-            pygame.draw.arc(surface, (185, 130, 30), ring, 0.5, 5.5, max(1, round(r * 0.05)))
+            top = pygame.Vector2(center) + pygame.Vector2(math.cos(a), math.sin(a)) * r * 0.9
+            for i in range(3):
+                size = r * (0.22 - i * 0.03)
+                curl = top + pygame.Vector2(math.copysign(i * r * 0.05, math.cos(a)), i * r * 0.22)
+                pygame.draw.circle(surface, (240, 195, 70), curl, size)
+                ring = pygame.Rect(0, 0, size * 1.2, size * 1.2)
+                ring.center = curl
+                pygame.draw.arc(surface, (185, 130, 30), ring, 0.5, 5.5, max(1, round(r * 0.05)))
 
 
 def draw_ride(surface, center, radius, kind):
