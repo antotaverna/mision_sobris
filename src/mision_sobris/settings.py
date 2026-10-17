@@ -1,6 +1,7 @@
-WIDTH = 960
-HEIGHT = 540
-PANEL_HEIGHT = 112  # progress bar along the bottom during a round
+# Portrait, since it's mostly played on phones.
+WIDTH = 540
+HEIGHT = 960
+PANEL_HEIGHT = 222  # progress bar along the bottom during a round
 PLAY_HEIGHT = HEIGHT - PANEL_HEIGHT  # where the cookies can be
 FPS = 60
 TITLE = "Misión Sobris"

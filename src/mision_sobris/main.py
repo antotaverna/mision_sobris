@@ -8,40 +8,40 @@ import pygame
 from mision_sobris import settings
 from mision_sobris.collection import Collection
 from mision_sobris.entities import Chaser, Cookie, Player
-from mision_sobris.hidden import (DINOSAURS, REWARD_NAMES, SHORT_NAMES, HiddenDino, draw_fossil_card, draw_medal,
-                                  draw_reward_icon)
+from mision_sobris.hidden import (DINOSAURS, REWARD_NAMES, SHORT_NAMES, HiddenDino, draw_banner, draw_fossil_card,
+                                  draw_medal, draw_reward_icon, render_fit)
 
 # Running in the browser (built with pygbag), where there is no window to close.
 WEB = sys.platform == "emscripten"
 
-# (key, title shown to players, description shown to players)
+# (key, title shown to players, description lines shown to players)
 MODES = [
-    ("classic", "Clásico", "Comé galletitas a tu ritmo. ¡Las quemadas te achican!"),
-    ("challenge", "Desafío", f"{settings.CHALLENGE_TIME} segundos. ¡Esquivá las quemadas y las enojadas!"),
+    ("classic", "Clásico", ("Comé galletitas a tu ritmo.", "¡Las quemadas te achican!")),
+    ("challenge", "Desafío", (f"{settings.CHALLENGE_TIME} segundos.", "¡Esquivá las quemadas y las enojadas!")),
 ]
 
 # Tappable areas, for touch screens and the mouse.
-CHARACTER_RECTS = [pygame.Rect(0, 0, 200, 250) for _ in settings.CHARACTERS]
+# Character cards in a 2x2 grid.
+CHARACTER_RECTS = [pygame.Rect(0, 0, 230, 300) for _ in settings.CHARACTERS]
 for i, rect in enumerate(CHARACTER_RECTS):
-    rect.center = (settings.WIDTH // 2 + (i - (len(CHARACTER_RECTS) - 1) / 2) * 225, 300)
-MODE_RECTS = [pygame.Rect(0, 0, 680, 80) for _ in MODES]
+    rect.center = (settings.WIDTH // 2 + (i % 2 - 0.5) * 250, 410 + i // 2 * 320)
+MODE_RECTS = [pygame.Rect(0, 0, settings.WIDTH - 60, 140) for _ in MODES]
 for i, rect in enumerate(MODE_RECTS):
-    rect.center = (settings.WIDTH // 2, 262 + i * 100)
+    rect.center = (settings.WIDTH // 2, 500 + i * 170)
 CHANGE_CHARACTER_BUTTON = pygame.Rect(16, 16, 190, 44)
-MENU_BUTTON = pygame.Rect(0, 0, 110, 40)
-MENU_BUTTON.midtop = (settings.WIDTH // 2, 10)
+MENU_BUTTON = pygame.Rect(settings.WIDTH - 126, 12, 110, 40)
 PLAY_AGAIN_BUTTON = pygame.Rect(0, 0, 220, 60)
-PLAY_AGAIN_BUTTON.center = (settings.WIDTH // 2 - 130, settings.HEIGHT // 2 + 90)
+PLAY_AGAIN_BUTTON.center = (settings.WIDTH // 2 - 120, settings.HEIGHT // 2 + 90)
 BACK_BUTTON = pygame.Rect(0, 0, 220, 60)
-BACK_BUTTON.center = (settings.WIDTH // 2 + 130, settings.HEIGHT // 2 + 90)
+BACK_BUTTON.center = (settings.WIDTH // 2 + 120, settings.HEIGHT // 2 + 90)
 # Clearing a player's collection: a small button on their menu, then an "are you sure?" box.
-RESET_BUTTON = pygame.Rect(settings.WIDTH - 196, 16, 180, 34)
-RESET_DIALOG = pygame.Rect(0, 0, 660, 230)
+RESET_BUTTON = pygame.Rect(settings.WIDTH - 196, 20, 180, 36)
+RESET_DIALOG = pygame.Rect(0, 0, settings.WIDTH - 40, 260)
 RESET_DIALOG.center = (settings.WIDTH // 2, settings.HEIGHT // 2)
-RESET_YES_BUTTON = pygame.Rect(0, 0, 220, 56)
-RESET_YES_BUTTON.center = (settings.WIDTH // 2 - 125, RESET_DIALOG.bottom - 55)
-RESET_NO_BUTTON = pygame.Rect(0, 0, 220, 56)
-RESET_NO_BUTTON.center = (settings.WIDTH // 2 + 125, RESET_DIALOG.bottom - 55)
+RESET_YES_BUTTON = pygame.Rect(0, 0, 200, 56)
+RESET_YES_BUTTON.center = (settings.WIDTH // 2 - 110, RESET_DIALOG.bottom - 55)
+RESET_NO_BUTTON = pygame.Rect(0, 0, 200, 56)
+RESET_NO_BUTTON.center = (settings.WIDTH // 2 + 110, RESET_DIALOG.bottom - 55)
 
 # A touch can arrive both as a finger event and as an emulated mouse click;
 # taps closer together than this are treated as one.
@@ -169,14 +169,8 @@ class Round:
         for find in self.hidden:
             find.draw_effects(screen, fonts, self.player)
         if self.announce_timer > 0:
-            banner = pygame.Rect(0, 0, 560, 80)
-            banner.midbottom = (settings.WIDTH / 2, settings.PLAY_HEIGHT - 12)
-            pygame.draw.rect(screen, settings.BG_COLOR, banner, border_radius=16)
-            pygame.draw.rect(screen, settings.HIGHLIGHT_COLOR, banner, 4, border_radius=16)
-            for text, font, y in (("¡Hay más dinosaurios enterrados!", fonts["hud"], banner.top + 28),
-                                  ("Buscalos por toda la pantalla", fonts["small"], banner.top + 58)):
-                rendered = font.render(text, True, settings.TEXT_COLOR)
-                screen.blit(rendered, rendered.get_rect(center=(banner.centerx, y)))
+            draw_banner(screen, fonts, [("¡Hay más dinosaurios enterrados!", "hud", settings.TEXT_COLOR),
+                                        ("Buscalos por toda la pantalla", "small", settings.TEXT_COLOR)])
         draw_progress_panel(screen, fonts, self.character, self.collection)
 
         screen.blit(fonts["hud"].render(f"Galletitas: {self.score}", True, settings.TEXT_COLOR), (16, 12))
@@ -185,13 +179,14 @@ class Round:
         if self.time_left is not None:
             color = settings.HIGHLIGHT_COLOR if self.time_left < 5 else settings.TEXT_COLOR
             timer = fonts["hud"].render(f"Tiempo: {self.time_left:4.1f}", True, color)
-            screen.blit(timer, timer.get_rect(topright=(settings.WIDTH - 16, 12)))
+            screen.blit(timer, timer.get_rect(topright=(settings.WIDTH - 16, MENU_BUTTON.bottom + 8)))
 
         if self.result:
             overlay = pygame.Surface((settings.WIDTH, settings.HEIGHT), pygame.SRCALPHA)
             overlay.fill(settings.OVERLAY_COLOR)
             screen.blit(overlay, (0, 0))
-            draw_centered(screen, fonts["title"], self.result, settings.HEIGHT / 2 - 80)
+            result = render_fit(fonts, self.result, settings.WIDTH - 40, settings.TEXT_COLOR, ("title", "big"))
+            screen.blit(result, result.get_rect(center=(settings.WIDTH / 2, settings.HEIGHT / 2 - 80)))
             draw_centered(screen, fonts["hud"], f"Galletitas comidas: {self.score}", settings.HEIGHT / 2 - 10)
             draw_button(screen, fonts["hud"], PLAY_AGAIN_BUTTON, "Otra vez")
             draw_button(screen, fonts["hud"], BACK_BUTTON, "Menú")
@@ -234,78 +229,77 @@ def draw_progress_panel(screen, fonts, character, collection):
         rendered = fonts[font].render(message, True, color)
         screen.blit(rendered, rendered.get_rect(center=center))
 
-    def divider(x):
-        pygame.draw.line(screen, settings.TEXT_COLOR, (x, top + 12), (x, panel.bottom - 12), 1)
-
-    # This player's fossils.
+    # This player's fossils, across the top.
     name = character["name"]
     fossils = collection.fossils(name)
     missing = total - len(fossils)
     status = f"te faltan {missing}" if missing else "¡todos!"
-    text(f"Fósiles de {name}: {len(fossils)} de {total} ({status})", "small", (215, top + 18))
+    text(f"Fósiles de {name}: {len(fossils)} de {total} ({status})", "small", (panel.centerx, top + 20))
     for j, species in enumerate(DINOSAURS):
-        spot = (58 + j * 104, top + 58)
-        draw_fossil_card(screen, spot, species, species in fossils, fonts["tiny"], scale=0.4)
-        text(SHORT_NAMES.get(species, species) if species in fossils else "???", "tiny", (spot[0], top + 94))
-    divider(430)
+        spot = (panel.centerx + (j - 1.5) * 128, top + 62)
+        draw_fossil_card(screen, spot, species, species in fossils, fonts["tiny"], scale=0.45)
+        text(SHORT_NAMES.get(species, species) if species in fossils else "???", "tiny", (spot[0], top + 100))
+    pygame.draw.line(screen, settings.TEXT_COLOR, (16, top + 118), (panel.right - 16, top + 118), 1)
+    pygame.draw.line(screen, settings.TEXT_COLOR, (290, top + 128), (290, panel.bottom - 10), 1)
 
-    # Prizes and medals.
+    # Prizes and medals, bottom left.
     rewards = collection.rewards(name)
     for j, reward in enumerate(REWARD_NAMES):
-        draw_reward_icon(screen, (482 + j * 92, top + 54), reward, reward in rewards, fonts["tiny"])
-    draw_medal(screen, (652, top + 52), 14)
-    text(f"Medallas: {collection.medals(name)}", "tiny", (652, top + 90))
-    divider(712)
+        draw_reward_icon(screen, (55 + j * 92, top + 158), reward, reward in rewards, fonts["tiny"])
+    draw_medal(screen, (232, top + 152), 13)
+    text(f"Medallas: {collection.medals(name)}", "tiny", (232, top + 186))
 
-    # Everyone else.
-    text("Los demás", "small", (836, top + 18))
+    # Everyone else, bottom right.
+    text("Los demás", "small", (415, top + 140))
     others = [other for other in settings.CHARACTERS if other["name"] != name]
     for j, other in enumerate(others):
-        y = top + 44 + j * 24
-        draw_character(screen, other, (736, y), 9)
+        y = top + 166 + j * 22
+        draw_character(screen, other, (310, y), 9)
         label = fonts["tiny"].render(other["name"], True, settings.TEXT_COLOR)
-        screen.blit(label, label.get_rect(midleft=(752, y)))
+        screen.blit(label, label.get_rect(midleft=(326, y)))
         count = fonts["tiny"].render(f"{len(collection.fossils(other['name']))}/{total}", True, settings.TEXT_COLOR)
-        screen.blit(count, count.get_rect(midright=(888, y)))
+        screen.blit(count, count.get_rect(midright=(466, y)))
         other_medals = collection.medals(other["name"])
         if other_medals:
-            draw_medal(screen, (906, y + 2), 7)
+            draw_medal(screen, (484, y + 2), 7)
             mark = fonts["tiny"].render(f"x{other_medals}", True, settings.TEXT_COLOR)
-            screen.blit(mark, mark.get_rect(midleft=(916, y)))
+            screen.blit(mark, mark.get_rect(midleft=(494, y)))
 
 
 def draw_character_select(screen, fonts, highlighted):
     screen.fill(settings.BG_COLOR)
-    draw_centered(screen, fonts["title"], settings.TITLE, 70)
-    draw_centered(screen, fonts["hud"], "¿Quién sos?", 135)
+    draw_centered(screen, fonts["title"], settings.TITLE, 110)
+    draw_centered(screen, fonts["hud"], "¿Quién sos?", 190)
     for i, (character, rect) in enumerate(zip(settings.CHARACTERS, CHARACTER_RECTS)):
         color = settings.HIGHLIGHT_COLOR if i == highlighted else settings.TEXT_COLOR
         pygame.draw.rect(screen, color, rect, width=3, border_radius=16)
-        draw_character(screen, character, (rect.centerx, rect.top + 105), 55)
+        draw_character(screen, character, (rect.centerx, rect.top + 125), 65)
         name = fonts["hud"].render(character["name"], True, color)
-        screen.blit(name, name.get_rect(center=(rect.centerx, rect.bottom - 35)))
-    hint = "Tocá tu galletita" if WEB else "Hacé clic en tu galletita o usá Izq/Der + Enter    Esc: salir"
-    draw_centered(screen, fonts["small"], hint, settings.HEIGHT - 40)
+        screen.blit(name, name.get_rect(center=(rect.centerx, rect.bottom - 40)))
+    if WEB:
+        draw_centered(screen, fonts["small"], "Tocá tu galletita", settings.HEIGHT - 50)
+    else:
+        draw_centered(screen, fonts["small"], "Clic en tu galletita o flechas + Enter", settings.HEIGHT - 64)
+        draw_centered(screen, fonts["small"], "Esc: salir", settings.HEIGHT - 36)
 
 
 def draw_mode_menu(screen, fonts, character, selected, confirm_reset):
     screen.fill(settings.BG_COLOR)
-    greeting = fonts["title"].render(f"¡Hola, {character['name']}!", True, settings.TEXT_COLOR)
-    greeting_rect = greeting.get_rect(center=(settings.WIDTH / 2 + 40, 140))
-    screen.blit(greeting, greeting_rect)
-    draw_character(screen, character, (greeting_rect.left - 60, greeting_rect.centery), 40)
+    draw_character(screen, character, (settings.WIDTH / 2, 230), 75)
+    draw_centered(screen, fonts["title"], f"¡Hola, {character['name']}!", 350)
     for i, ((_, name, description), rect) in enumerate(zip(MODES, MODE_RECTS)):
         color = settings.HIGHLIGHT_COLOR if i == selected else settings.TEXT_COLOR
         pygame.draw.rect(screen, color, rect, width=3, border_radius=14)
-        draw_centered(screen, fonts["hud"], f"{i + 1}. {name}", rect.centery - 16, color)
-        draw_centered(screen, fonts["small"], description, rect.centery + 18)
+        draw_centered(screen, fonts["hud"], f"{i + 1}. {name}", rect.top + 36, color)
+        for j, line in enumerate(description):
+            draw_centered(screen, fonts["small"], line, rect.top + 78 + j * 28)
     draw_button(screen, fonts["small"], CHANGE_CHARACTER_BUTTON, "Cambiar sobri")
     if WEB:
-        draw_centered(screen, fonts["small"], "Mantené el dedo apretado para mover la galletita", settings.HEIGHT - 70)
-        draw_centered(screen, fonts["small"], "Tocá un modo para jugar", settings.HEIGHT - 40)
+        draw_centered(screen, fonts["small"], "Mantené el dedo apretado", settings.HEIGHT - 78)
+        draw_centered(screen, fonts["small"], "para mover la galletita", settings.HEIGHT - 50)
     else:
-        draw_centered(screen, fonts["small"], "Hacé clic en un modo o usá Arriba/Abajo + Enter    Esc: cambiar sobri",
-                      settings.HEIGHT - 40)
+        draw_centered(screen, fonts["small"], "Clic en un modo o Arriba/Abajo + Enter", settings.HEIGHT - 64)
+        draw_centered(screen, fonts["small"], "Esc: cambiar sobri", settings.HEIGHT - 36)
 
     if not confirm_reset:
         pygame.draw.rect(screen, (190, 170, 145), RESET_BUTTON, width=2, border_radius=10)
@@ -338,6 +332,7 @@ async def run():
         "hud": pygame.font.Font(None, 40),
         "small": pygame.font.Font(None, 28),
         "tiny": pygame.font.Font(None, 22),
+        "big": pygame.font.Font(None, 56),
     }
 
     collection = Collection()
@@ -382,6 +377,8 @@ async def run():
                     highlighted = (highlighted - 1) % count
                 elif event.key in (pygame.K_RIGHT, pygame.K_d):
                     highlighted = (highlighted + 1) % count
+                elif event.key in (pygame.K_UP, pygame.K_w, pygame.K_DOWN, pygame.K_s):
+                    highlighted = (highlighted + 2) % count
                 elif pygame.K_1 <= event.key < pygame.K_1 + count:
                     highlighted = event.key - pygame.K_1
                     character = settings.CHARACTERS[highlighted]

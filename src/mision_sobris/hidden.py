@@ -137,6 +137,27 @@ DINOSAURS = {
     "Estegosaurio": draw_stegosaurus,
 }
 
+def render_fit(fonts, text, max_width, color, names=("hud", "small")):
+    """Render text in the first of the named fonts it fits in, or the last one."""
+    for name in names:
+        rendered = fonts[name].render(text, True, color)
+        if rendered.get_width() <= max_width:
+            break
+    return rendered
+
+
+def draw_banner(surface, fonts, lines):
+    """A rounded box just above the progress bar with one or more (text, font, color) lines."""
+    banner = pygame.Rect(0, 0, settings.WIDTH - 24, 40 + 32 * len(lines))
+    banner.midbottom = (settings.WIDTH / 2, settings.PLAY_HEIGHT - 12)
+    pygame.draw.rect(surface, settings.BG_COLOR, banner, border_radius=16)
+    pygame.draw.rect(surface, settings.HIGHLIGHT_COLOR, banner, 4, border_radius=16)
+    for i, (text, font, color) in enumerate(lines):
+        names = ("hud", "small") if font == "hud" else (font, "tiny")
+        rendered = render_fit(fonts, text, banner.width - 24, color, names)
+        surface.blit(rendered, rendered.get_rect(center=(banner.centerx, banner.top + 34 + i * 32)))
+
+
 # Shorter names for tight spots like the progress bar.
 SHORT_NAMES = {"Tiranosaurio rex": "T. rex"}
 
@@ -326,14 +347,7 @@ class HiddenDino:
             surface.blit(title, title.get_rect(center=(bubble.centerx, bubble.top + 19)))
             surface.blit(detail, detail.get_rect(center=(bubble.centerx, bubble.top + 41)))
         if self.message_timer > 0:
-            lines = [(self.title, fonts["hud"], settings.TEXT_COLOR),
-                     (REWARD_TEXT[self.reward], fonts["small"], settings.TEXT_COLOR)]
+            lines = [(self.title, "hud", settings.TEXT_COLOR), (REWARD_TEXT[self.reward], "small", settings.TEXT_COLOR)]
             if self.note:
-                lines.append((self.note, fonts["small"], settings.HIGHLIGHT_COLOR))
-            banner = pygame.Rect(0, 0, 680, 40 + 32 * len(lines))
-            banner.midbottom = (settings.WIDTH / 2, settings.PLAY_HEIGHT - 12)
-            pygame.draw.rect(surface, settings.BG_COLOR, banner, border_radius=16)
-            pygame.draw.rect(surface, settings.HIGHLIGHT_COLOR, banner, 4, border_radius=16)
-            for i, (text, font, color) in enumerate(lines):
-                rendered = font.render(text, True, color)
-                surface.blit(rendered, rendered.get_rect(center=(banner.centerx, banner.top + 34 + i * 32)))
+                lines.append((self.note, "small", settings.HIGHLIGHT_COLOR))
+            draw_banner(surface, fonts, lines)
