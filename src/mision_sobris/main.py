@@ -83,7 +83,7 @@ class Round:
             species = (missing + others)[:2]
             for reward, kind in zip(("hat", "magnifier"), species):
                 avoid = [self.player.pos] + [find.pos for find in self.hidden]
-                self.hidden.append(HiddenDino(avoid, reward, kind))
+                self.hidden.append(HiddenDino(avoid, reward, kind, character.get("hard_finds", False)))
 
     def give_reward(self, reward):
         """Dress the player up with what a hidden find gave, for the rest of the round."""

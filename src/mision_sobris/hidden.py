@@ -205,8 +205,10 @@ REWARD_TEXT = {
 class HiddenDino:
     """A dinosaur fossil buried somewhere on the floor. Finding it gives a reward."""
 
-    def __init__(self, avoid_positions, reward, species):
+    def __init__(self, avoid_positions, reward, species, hard=False):
         self.reward = reward
+        self.find_distance = settings.HIDDEN_HARD_FIND_DISTANCE if hard else settings.HIDDEN_FIND_DISTANCE
+        self.hint_distance = settings.HIDDEN_HARD_HINT_DISTANCE if hard else settings.HIDDEN_HINT_DISTANCE
         self.species = species
         self.title = f"¡Encontraste un {species}!"
         self.note = None  # set when found, e.g. to say it's new for the collection
@@ -227,7 +229,7 @@ class HiddenDino:
     def update(self, dt, player):
         """Returns True on the frame the find is fully dug up."""
         if not self.found:
-            if player.pos.distance_to(self.pos) < settings.HIDDEN_FIND_DISTANCE + player.radius * 0.3:
+            if player.pos.distance_to(self.pos) < self.find_distance + player.radius * 0.3:
                 self.found = True
                 self.dig_timer = settings.HIDDEN_DIG_TIME
             return False
@@ -249,7 +251,7 @@ class HiddenDino:
     def draw(self, surface, player):
         """Draw what's on the floor: hint specks, the dig, or the fossil. Goes under the player."""
         if not self.found:
-            closeness = 1 - self.pos.distance_to(player.pos) / settings.HIDDEN_HINT_DISTANCE
+            closeness = 1 - self.pos.distance_to(player.pos) / self.hint_distance
             for i, speck in enumerate(self.specks):
                 if closeness > i / len(self.specks):
                     pygame.draw.circle(surface, DIRT_DARK, self.pos + speck, 3.5)
