@@ -143,6 +143,14 @@ def draw_hair(surface, center, radius, kind):
                 ring.center = curl
                 pygame.draw.arc(surface, (185, 130, 30), ring, 0.5, 5.5, max(1, round(r * 0.05)))
 
+        # A short curl peeking out on top, beside the crown.
+        a = math.radians(-140)
+        curl = pygame.Vector2(center) + pygame.Vector2(math.cos(a), math.sin(a)) * r * 1.08
+        pygame.draw.circle(surface, (240, 195, 70), curl, r * 0.2)
+        ring = pygame.Rect(0, 0, r * 0.24, r * 0.24)
+        ring.center = curl
+        pygame.draw.arc(surface, (185, 130, 30), ring, 0.5, 5.5, max(1, round(r * 0.05)))
+
 
 def draw_ride(surface, center, radius, kind):
     """Draw what a character rides on, sitting under the cookie."""
