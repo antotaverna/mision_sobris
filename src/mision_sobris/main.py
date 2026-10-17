@@ -34,6 +34,14 @@ PLAY_AGAIN_BUTTON = pygame.Rect(0, 0, 220, 60)
 PLAY_AGAIN_BUTTON.center = (settings.WIDTH // 2 - 130, settings.HEIGHT // 2 + 90)
 BACK_BUTTON = pygame.Rect(0, 0, 220, 60)
 BACK_BUTTON.center = (settings.WIDTH // 2 + 130, settings.HEIGHT // 2 + 90)
+# Clearing everyone's collection: a small button, then a "are you sure?" box.
+RESET_BUTTON = pygame.Rect(settings.WIDTH - 166, settings.HEIGHT - 50, 150, 34)
+RESET_DIALOG = pygame.Rect(0, 0, 660, 230)
+RESET_DIALOG.center = (settings.WIDTH // 2, settings.HEIGHT // 2)
+RESET_YES_BUTTON = pygame.Rect(0, 0, 220, 56)
+RESET_YES_BUTTON.center = (settings.WIDTH // 2 - 125, RESET_DIALOG.bottom - 55)
+RESET_NO_BUTTON = pygame.Rect(0, 0, 220, 56)
+RESET_NO_BUTTON.center = (settings.WIDTH // 2 + 125, RESET_DIALOG.bottom - 55)
 
 # A touch can arrive both as a finger event and as an emulated mouse click;
 # taps closer together than this are treated as one.
@@ -182,7 +190,7 @@ def draw_character(screen, character, center, radius):
     portrait.draw(screen)
 
 
-def draw_character_select(screen, fonts, highlighted, collection):
+def draw_character_select(screen, fonts, highlighted, collection, confirm_reset):
     screen.fill(settings.BG_COLOR)
     draw_centered(screen, fonts["title"], settings.TITLE, 50)
     draw_centered(screen, fonts["hud"], "¿Quién sos?", 106)
@@ -208,6 +216,23 @@ def draw_character_select(screen, fonts, highlighted, collection):
             screen.blit(count, count.get_rect(center=(rect.right - 30, rect.top + 68)))
     hint = "Tocá tu galletita" if WEB else "Hacé clic en tu galletita o usá Izq/Der + Enter    Esc: salir"
     draw_centered(screen, fonts["small"], hint, settings.HEIGHT - 40)
+
+    if not confirm_reset:
+        pygame.draw.rect(screen, (190, 170, 145), RESET_BUTTON, width=2, border_radius=10)
+        label = fonts["tiny"].render("Borrar progreso", True, (165, 140, 110))
+        screen.blit(label, label.get_rect(center=RESET_BUTTON.center))
+        return
+    overlay = pygame.Surface((settings.WIDTH, settings.HEIGHT), pygame.SRCALPHA)
+    overlay.fill(settings.OVERLAY_COLOR)
+    screen.blit(overlay, (0, 0))
+    pygame.draw.rect(screen, settings.BG_COLOR, RESET_DIALOG, border_radius=18)
+    pygame.draw.rect(screen, settings.HIGHLIGHT_COLOR, RESET_DIALOG, width=4, border_radius=18)
+    draw_centered(screen, fonts["hud"], "¿Borrar el progreso de todos?", RESET_DIALOG.top + 45)
+    draw_centered(screen, fonts["small"], "Se borran los fósiles, premios y medallas de los 4 sobris.",
+                  RESET_DIALOG.top + 88)
+    draw_centered(screen, fonts["small"], "No se puede deshacer.", RESET_DIALOG.top + 116)
+    draw_button(screen, fonts["hud"], RESET_YES_BUTTON, "Sí, borrar")
+    draw_button(screen, fonts["hud"], RESET_NO_BUTTON, "No")
 
 
 def draw_mode_menu(screen, fonts, character, selected):
@@ -247,6 +272,7 @@ async def run():
     }
 
     collection = Collection()
+    confirm_reset = False  # asking whether to clear everyone's collection
     character = None  # the chosen character, or None while picking one
     highlighted = 0  # character highlighted with the keyboard
     selected = 0  # mode highlighted with the keyboard
@@ -276,6 +302,9 @@ async def run():
 
             elif event.type != pygame.KEYDOWN:
                 continue
+            elif character is None and confirm_reset:
+                if event.key == pygame.K_ESCAPE:
+                    confirm_reset = False
             elif character is None:
                 count = len(settings.CHARACTERS)
                 if event.key == pygame.K_ESCAPE and not WEB:
@@ -309,7 +338,15 @@ async def run():
         now = time.monotonic()
         if tap is not None and now - last_tap > TAP_COOLDOWN:
             last_tap = now
-            if character is None:
+            if character is None and confirm_reset:
+                if RESET_YES_BUTTON.collidepoint(tap):
+                    collection.reset()
+                    confirm_reset = False
+                elif RESET_NO_BUTTON.collidepoint(tap):
+                    confirm_reset = False
+            elif character is None and RESET_BUTTON.collidepoint(tap):
+                confirm_reset = True
+            elif character is None:
                 for i, rect in enumerate(CHARACTER_RECTS):
                     if rect.collidepoint(tap):
                         highlighted = i
@@ -331,7 +368,7 @@ async def run():
                 pointer = None
 
         if character is None:
-            draw_character_select(screen, fonts, highlighted, collection)
+            draw_character_select(screen, fonts, highlighted, collection, confirm_reset)
         elif current is None:
             draw_mode_menu(screen, fonts, character, selected)
         else:
