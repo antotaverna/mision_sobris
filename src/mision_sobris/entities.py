@@ -252,6 +252,8 @@ class Player:
 
         if self.character:
             draw_accessory(surface, self.pos, r, self.character["accessory"], self.character["accent"], self.facing)
+            if "hat" in self.character:
+                draw_accessory(surface, self.pos, r, self.character["hat"], settings.EXPLORER_HAT_COLOR, self.facing)
             if "ride" in self.character:
                 draw_ride(surface, self.pos, r, self.character["ride"])
 

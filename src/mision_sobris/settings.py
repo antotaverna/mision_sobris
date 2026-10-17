@@ -54,3 +54,5 @@ HIDDEN_HINT_DISTANCE = 130  # within this distance a few dirt specks start to sh
 HIDDEN_DIG_TIME = 1.0  # seconds of flying dirt before the find shows up
 HIDDEN_MESSAGE_TIME = 3.5  # seconds the "you found..." banner stays up
 EXPLORER_HAT_COLOR = (195, 160, 100)
+# Accessories worn under the explorer hat; any other accessory is swapped for it.
+ACCESSORIES_KEPT_UNDER_HAT = ("spider",)

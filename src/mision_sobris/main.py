@@ -78,8 +78,11 @@ class Round:
         for find in self.hidden:
             if find.update(dt, self.player):
                 # The reward: an archaeologist's hat for the rest of the round.
-                self.player.character = {**self.player.character, "accessory": "explorer_hat",
-                                         "accent": settings.EXPLORER_HAT_COLOR}
+                if self.character["accessory"] in settings.ACCESSORIES_KEPT_UNDER_HAT:
+                    self.player.character = {**self.character, "hat": "explorer_hat"}
+                else:
+                    self.player.character = {**self.character, "accessory": "explorer_hat",
+                                             "accent": settings.EXPLORER_HAT_COLOR}
 
         for chaser in self.chasers:
             chaser.update(dt, self.player.pos)
