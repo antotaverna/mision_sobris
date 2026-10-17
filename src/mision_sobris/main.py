@@ -303,7 +303,7 @@ def draw_character_select(screen, fonts, highlighted):
 
 def draw_mode_menu(screen, fonts, character, selected, confirm_reset):
     screen.fill(settings.BG_COLOR)
-    draw_character(screen, character, (settings.WIDTH / 2, 230), 75)
+    draw_character(screen, character, (settings.WIDTH / 2, 205), 70)
     draw_centered(screen, fonts["title"], f"¡Hola, {character['name']}!", 350)
     for i, ((_, name, description), rect) in enumerate(zip(MODES, MODE_RECTS)):
         color = settings.HIGHLIGHT_COLOR if i == selected else settings.TEXT_COLOR
