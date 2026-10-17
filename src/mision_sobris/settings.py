@@ -14,16 +14,16 @@ BURNT_COLORS = ((30, 20, 15), (65, 42, 28), (20, 12, 8))
 CHASER_COLORS = ((120, 60, 30), (175, 95, 50), (60, 25, 10))
 
 # Playable characters, one per nephew/niece. accessory is one of:
-# "cap", "headphones", "crown", "glasses" (see entities.draw_accessory).
+# "cap", "headphones", "crown", "spider" (see entities.draw_accessory).
 CHARACTERS = [
     {"name": "Juani", "colors": ((80, 45, 25), (115, 70, 40), (245, 235, 220)),  # chocolate
-     "accessory": "cap", "accent": (40, 90, 200)},
+     "accessory": "spider", "accent": (205, 25, 35)},
     {"name": "Lucha", "colors": ((200, 110, 130), (240, 170, 185), (175, 35, 65)),  # strawberry
-     "accessory": "headphones", "accent": (130, 60, 190)},
-    {"name": "Male", "colors": ((205, 170, 110), (250, 228, 175), (90, 55, 25)),  # vanilla
      "accessory": "crown", "accent": (235, 185, 40)},
+    {"name": "Male", "colors": ((205, 170, 110), (250, 228, 175), (90, 55, 25)),  # vanilla
+     "accessory": "headphones", "accent": (130, 60, 190)},
     {"name": "Juli", "colors": ((150, 90, 40), (200, 135, 70), (105, 55, 20)),  # dulce de leche
-     "accessory": "glasses", "accent": (40, 150, 70)},
+     "accessory": "cap", "accent": (40, 150, 70)},
 ]
 
 PLAYER_RADIUS = 28

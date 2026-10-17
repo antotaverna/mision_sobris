@@ -102,14 +102,29 @@ def draw_accessory(surface, center, radius, kind, color, facing):
                   (cx + half, base_y)]
         pygame.draw.polygon(surface, color, points)
         pygame.draw.circle(surface, (200, 30, 60), (cx, base_y - r * 0.14), r * 0.08)
-    elif kind == "glasses":
-        width = max(2, round(r * 0.07))
-        lenses = []
+    elif kind == "spider":
+        # Spider-Man mask over the upper face: red with a web, big white lenses, mouth left free.
+        size = math.ceil(r * 2)
+        mask = pygame.Surface((size, size), pygame.SRCALPHA)
+        hub = pygame.Vector2(size / 2, size / 2 + r * 0.05)
+        pygame.draw.circle(mask, color, (size / 2, size / 2), r * 0.88)
+        web = (25, 15, 15)
+        thin = max(1, round(r * 0.035))
+        spokes = [math.radians(a) for a in range(180, 361, 30)]
+        for a in spokes:
+            pygame.draw.line(mask, web, hub, hub + pygame.Vector2(math.cos(a), math.sin(a)) * r * 0.86, thin)
+        for frac in (0.3, 0.55, 0.8):
+            ring = [hub + pygame.Vector2(math.cos(a), math.sin(a)) * r * frac for a in spokes]
+            pygame.draw.lines(mask, web, False, ring, thin)
+        # Cut the mask off just under the eyes.
+        mask.fill((0, 0, 0, 0), pygame.Rect(0, hub.y, size, size))
+        surface.blit(mask, (cx - size / 2, cy - size / 2))
         for s in (-1, 1):
             eye = pygame.Vector2(cx + s * r * 0.32, cy - r * 0.22) + look
-            pygame.draw.circle(surface, color, eye, r * 0.26, width)
-            lenses.append(eye)
-        pygame.draw.line(surface, color, lenses[0] + (r * 0.26, 0), lenses[1] - (r * 0.26, 0), width)
+            lens = [eye + pygame.Vector2(s * dx, dy) * r
+                    for dx, dy in ((-0.14, 0.02), (0.06, -0.16), (0.24, -0.12), (0.16, 0.1), (-0.04, 0.12))]
+            pygame.draw.polygon(surface, (255, 255, 255), lens)
+            pygame.draw.polygon(surface, (20, 20, 20), lens, max(2, round(r * 0.06)))
 
 
 class Player:
