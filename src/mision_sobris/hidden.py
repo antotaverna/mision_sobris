@@ -137,6 +137,9 @@ DINOSAURS = {
     "Estegosaurio": draw_stegosaurus,
 }
 
+# Shorter names for tight spots like the progress bar.
+SHORT_NAMES = {"Tiranosaurio rex": "T. rex"}
+
 
 def draw_dino_fossil(surface, center, species):
     """A dinosaur skeleton lying in a patch of dug-up dirt, looking left."""
@@ -227,6 +230,10 @@ class HiddenDino:
         self.message_timer = 0.0
         self.specks = [pygame.Vector2(random.uniform(-25, 25), random.uniform(-14, 14)) for _ in range(9)]
         self.flying_dirt = []
+
+    def done(self):
+        """Dug up, and its "you found..." banner is gone."""
+        return self.found and self.dig_timer <= 0 and self.message_timer <= 0
 
     def right_size(self, player):
         if self.need == "big":

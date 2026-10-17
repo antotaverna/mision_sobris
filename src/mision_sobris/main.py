@@ -8,7 +8,7 @@ import pygame
 from mision_sobris import settings
 from mision_sobris.collection import Collection
 from mision_sobris.entities import Chaser, Cookie, Player
-from mision_sobris.hidden import (DINOSAURS, REWARD_NAMES, HiddenDino, draw_fossil_card, draw_medal,
+from mision_sobris.hidden import (DINOSAURS, REWARD_NAMES, SHORT_NAMES, HiddenDino, draw_fossil_card, draw_medal,
                                   draw_reward_icon)
 
 # Running in the browser (built with pygbag), where there is no window to close.
@@ -67,31 +67,39 @@ class Round:
         else:
             self.chasers = []
             self.time_left = None
-        # Classic mode hides things in the floor to find by walking over them.
+        # Classic mode hides things in the floor to find by walking over them; once both
+        # are dug up, a new pair gets buried after a short pause.
         self.hidden = []
+        self.rebury_timer = None
+        self.announce_timer = 0.0
         if not self.challenge:
-            # Two different dinosaurs each round, the ones this player is missing first.
-            have = self.collection.fossils(character["name"])
-            if all(kind in have for kind in DINOSAURS):
-                # Saves from before medals existed can hold a full collection; give its medal now.
-                self.collection.complete(character["name"])
-                have = []
-            missing = [kind for kind in DINOSAURS if kind not in have]
-            others = [kind for kind in DINOSAURS if kind in have]
-            random.shuffle(missing)
-            random.shuffle(others)
-            species = (missing + others)[:2]
-            # Some finds need the cookie to be big or small; always for hard_finds characters,
-            # at most one of the two for everyone else.
-            hard = character.get("hard_finds", False)
-            if hard:
-                needs = [random.choice(("big", "small")) for _ in species]
-            else:
-                needs = [None] * len(species)
-                needs[random.randrange(len(needs))] = random.choice((None, "big", "small"))
-            for reward, kind, need in zip(("hat", "magnifier"), species, needs):
-                avoid = [self.player.pos] + [find.pos for find in self.hidden]
-                self.hidden.append(HiddenDino(avoid, reward, kind, hard, need))
+            self.bury_dinosaurs()
+
+    def bury_dinosaurs(self):
+        """Hide two different dinosaurs, the ones this player is missing first."""
+        character = self.character
+        have = self.collection.fossils(character["name"])
+        if all(kind in have for kind in DINOSAURS):
+            # Saves from before medals existed can hold a full collection; give its medal now.
+            self.collection.complete(character["name"])
+            have = []
+        missing = [kind for kind in DINOSAURS if kind not in have]
+        others = [kind for kind in DINOSAURS if kind in have]
+        random.shuffle(missing)
+        random.shuffle(others)
+        species = (missing + others)[:2]
+        # Some finds need the cookie to be big or small; always for hard_finds characters,
+        # at most one of the two for everyone else.
+        hard = character.get("hard_finds", False)
+        if hard:
+            needs = [random.choice(("big", "small")) for _ in species]
+        else:
+            needs = [None] * len(species)
+            needs[random.randrange(len(needs))] = random.choice((None, "big", "small"))
+        self.hidden = []
+        for reward, kind, need in zip(("hat", "magnifier"), species, needs):
+            avoid = [self.player.pos] + [find.pos for find in self.hidden]
+            self.hidden.append(HiddenDino(avoid, reward, kind, hard, need))
 
     def give_reward(self, reward):
         """Dress the player up with what a hidden find gave, for the rest of the round."""
@@ -134,6 +142,16 @@ class Round:
                     else:
                         find.note = f"¡Nuevo en tu colección! ({count} de {len(DINOSAURS)})"
 
+        self.announce_timer = max(0.0, self.announce_timer - dt)
+        if self.hidden and all(find.done() for find in self.hidden):
+            if self.rebury_timer is None:
+                self.rebury_timer = settings.REBURY_DELAY
+            self.rebury_timer -= dt
+            if self.rebury_timer <= 0:
+                self.rebury_timer = None
+                self.bury_dinosaurs()
+                self.announce_timer = settings.HIDDEN_MESSAGE_TIME
+
         for chaser in self.chasers:
             chaser.update(dt, self.player.pos)
             if chaser.touches(self.player):
@@ -155,6 +173,15 @@ class Round:
             chaser.draw(screen)
         for find in self.hidden:
             find.draw_effects(screen, fonts, self.player)
+        if self.announce_timer > 0:
+            banner = pygame.Rect(0, 0, 560, 80)
+            banner.midbottom = (settings.WIDTH / 2, settings.PLAY_HEIGHT - 12)
+            pygame.draw.rect(screen, settings.BG_COLOR, banner, border_radius=16)
+            pygame.draw.rect(screen, settings.HIGHLIGHT_COLOR, banner, 4, border_radius=16)
+            for text, font, y in (("¡Hay más dinosaurios enterrados!", fonts["hud"], banner.top + 28),
+                                  ("Buscalos por toda la pantalla", fonts["small"], banner.top + 58)):
+                rendered = font.render(text, True, settings.TEXT_COLOR)
+                screen.blit(rendered, rendered.get_rect(center=(banner.centerx, y)))
         draw_progress_panel(screen, fonts, self.character, self.collection)
 
         screen.blit(fonts["hud"].render(f"Galletitas: {self.score}", True, settings.TEXT_COLOR), (16, 12))
@@ -224,7 +251,7 @@ def draw_progress_panel(screen, fonts, character, collection):
     for j, species in enumerate(DINOSAURS):
         spot = (58 + j * 104, top + 58)
         draw_fossil_card(screen, spot, species, species in fossils, fonts["tiny"], scale=0.4)
-        text(species if species in fossils else "???", "tiny", (spot[0], top + 94))
+        text(SHORT_NAMES.get(species, species) if species in fossils else "???", "tiny", (spot[0], top + 94))
     divider(430)
 
     # Prizes and medals.
