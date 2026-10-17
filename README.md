@@ -23,8 +23,8 @@ First pick a character (Juani, Lucha, Male, or Juli; they're defined in `CHARACT
 - **Classic**: eat cookies at your own pace. Touch a small cookie to eat it and grow;
   burnt (dark) cookies shrink you. Two dinosaur fossils (picked at random from a T. rex, a
   Triceratops, a Brontosaurus, and a Stegosaurus) are buried in the floor: walk over one to dig it up. One gives an explorer hat, the other a magnifying glass (a few dirt
-  specks show up when you get close). Each player's fossil collection is shown on their
-  menu and kept between games (in `~/.mision_sobris.json` on desktop, in the browser's
+  specks show up when you get close). Each player's fossil collection and the prizes they've
+  won are shown on their card in the character select and kept between games (in `~/.mision_sobris.json` on desktop, in the browser's
   local storage on the web).
 - **Challenge**: 20 seconds to eat as many as you can, with burnt cookies too, while
   big angry cookies chase you (one slow, one fast); if one catches you, the round ends.

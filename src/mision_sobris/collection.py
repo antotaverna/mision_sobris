@@ -11,7 +11,8 @@ SAVE_PATH = Path.home() / ".mision_sobris.json"  # desktop save file
 
 class Collection:
     def __init__(self):
-        self.found = self._load()  # player name -> species found, in the order found
+        # player name -> {"fossils": species found, "rewards": rewards won}, in the order found
+        self.found = self._load()
 
     def _load(self):
         try:
@@ -22,7 +23,12 @@ class Collection:
             else:
                 raw = SAVE_PATH.read_text() if SAVE_PATH.exists() else None
             data = json.loads(raw) if raw else {}
-            return {name: list(species) for name, species in data.items()}
+            found = {}
+            for name, entry in data.items():
+                if isinstance(entry, list):  # older saves only listed the fossils
+                    entry = {"fossils": entry}
+                found[name] = {"fossils": list(entry.get("fossils", [])), "rewards": list(entry.get("rewards", []))}
+            return found
         except Exception:
             # An unreadable save just means starting a fresh collection.
             return {}
@@ -39,14 +45,17 @@ class Collection:
         except Exception:
             pass  # not being able to save shouldn't stop the game
 
-    def of(self, name):
-        return self.found.get(name, [])
+    def fossils(self, name):
+        return self.found.get(name, {}).get("fossils", [])
 
-    def add(self, name, species):
-        """Record a find. Returns True if it was new for this player."""
-        found = self.found.setdefault(name, [])
-        if species in found:
+    def rewards(self, name):
+        return self.found.get(name, {}).get("rewards", [])
+
+    def add(self, name, kind, item):
+        """Record a fossil or reward (kind is "fossils" or "rewards"). Returns True if it was new."""
+        entry = self.found.setdefault(name, {"fossils": [], "rewards": []})
+        if item in entry[kind]:
             return False
-        found.append(species)
+        entry[kind].append(item)
         self._save()
         return True

@@ -8,7 +8,7 @@ import pygame
 from mision_sobris import settings
 from mision_sobris.collection import Collection
 from mision_sobris.entities import Chaser, Cookie, Player
-from mision_sobris.hidden import DINOSAURS, HiddenDino, draw_fossil_card
+from mision_sobris.hidden import DINOSAURS, REWARD_NAMES, HiddenDino, draw_fossil_card, draw_reward_icon
 
 # Running in the browser (built with pygbag), where there is no window to close.
 WEB = sys.platform == "emscripten"
@@ -20,12 +20,12 @@ MODES = [
 ]
 
 # Tappable areas, for touch screens and the mouse.
-CHARACTER_RECTS = [pygame.Rect(0, 0, 200, 250) for _ in settings.CHARACTERS]
+CHARACTER_RECTS = [pygame.Rect(0, 0, 210, 330) for _ in settings.CHARACTERS]
 for i, rect in enumerate(CHARACTER_RECTS):
-    rect.center = (settings.WIDTH // 2 + (i - (len(CHARACTER_RECTS) - 1) / 2) * 225, 300)
+    rect.center = (settings.WIDTH // 2 + (i - (len(CHARACTER_RECTS) - 1) / 2) * 228, 306)
 MODE_RECTS = [pygame.Rect(0, 0, 680, 80) for _ in MODES]
 for i, rect in enumerate(MODE_RECTS):
-    rect.center = (settings.WIDTH // 2, 195 + i * 90)
+    rect.center = (settings.WIDTH // 2, 262 + i * 100)
 CHANGE_CHARACTER_BUTTON = pygame.Rect(16, 16, 190, 44)
 MENU_BUTTON = pygame.Rect(0, 0, 110, 40)
 MENU_BUTTON.midtop = (settings.WIDTH // 2, 10)
@@ -98,8 +98,10 @@ class Round:
         for find in self.hidden:
             if find.update(dt, self.player):
                 self.give_reward(find.reward)
-                if self.collection.add(self.character["name"], find.species):
-                    count = len(self.collection.of(self.character["name"]))
+                name = self.character["name"]
+                self.collection.add(name, "rewards", find.reward)
+                if self.collection.add(name, "fossils", find.species):
+                    count = len(self.collection.fossils(name))
                     if count == len(DINOSAURS):
                         find.note = "¡Completaste la colección de fósiles!"
                     else:
@@ -169,24 +171,33 @@ def draw_character(screen, character, center, radius):
     portrait.draw(screen)
 
 
-def draw_character_select(screen, fonts, highlighted):
+def draw_character_select(screen, fonts, highlighted, collection):
     screen.fill(settings.BG_COLOR)
-    draw_centered(screen, fonts["title"], settings.TITLE, 70)
-    draw_centered(screen, fonts["hud"], "¿Quién sos?", 135)
+    draw_centered(screen, fonts["title"], settings.TITLE, 50)
+    draw_centered(screen, fonts["hud"], "¿Quién sos?", 106)
     for i, (character, rect) in enumerate(zip(settings.CHARACTERS, CHARACTER_RECTS)):
         color = settings.HIGHLIGHT_COLOR if i == highlighted else settings.TEXT_COLOR
         pygame.draw.rect(screen, color, rect, width=3, border_radius=16)
-        draw_character(screen, character, (rect.centerx, rect.top + 105), 55)
+        draw_character(screen, character, (rect.centerx, rect.top + 72), 46)
         name = fonts["hud"].render(character["name"], True, color)
-        screen.blit(name, name.get_rect(center=(rect.centerx, rect.bottom - 35)))
+        screen.blit(name, name.get_rect(center=(rect.centerx, rect.top + 148)))
+        # This sobri's fossil collection and the prizes they've won.
+        fossils = collection.fossils(character["name"])
+        for j, species in enumerate(DINOSAURS):
+            spot = (rect.centerx + (j % 2 - 0.5) * 94, rect.top + 184 + j // 2 * 44)
+            draw_fossil_card(screen, spot, species, species in fossils, fonts["tiny"], scale=0.4)
+        rewards = collection.rewards(character["name"])
+        for j, reward in enumerate(REWARD_NAMES):
+            spot = (rect.centerx + (j - 0.5) * 94, rect.top + 284)
+            draw_reward_icon(screen, spot, reward, reward in rewards, fonts["tiny"])
     hint = "Tocá tu galletita" if WEB else "Hacé clic en tu galletita o usá Izq/Der + Enter    Esc: salir"
     draw_centered(screen, fonts["small"], hint, settings.HEIGHT - 40)
 
 
-def draw_mode_menu(screen, fonts, character, selected, collection):
+def draw_mode_menu(screen, fonts, character, selected):
     screen.fill(settings.BG_COLOR)
     greeting = fonts["title"].render(f"¡Hola, {character['name']}!", True, settings.TEXT_COLOR)
-    greeting_rect = greeting.get_rect(center=(settings.WIDTH / 2 + 40, 100))
+    greeting_rect = greeting.get_rect(center=(settings.WIDTH / 2 + 40, 140))
     screen.blit(greeting, greeting_rect)
     draw_character(screen, character, (greeting_rect.left - 60, greeting_rect.centery), 40)
     for i, ((_, name, description), rect) in enumerate(zip(MODES, MODE_RECTS)):
@@ -195,19 +206,12 @@ def draw_mode_menu(screen, fonts, character, selected, collection):
         draw_centered(screen, fonts["hud"], f"{i + 1}. {name}", rect.centery - 16, color)
         draw_centered(screen, fonts["small"], description, rect.centery + 18)
     draw_button(screen, fonts["small"], CHANGE_CHARACTER_BUTTON, "Cambiar sobri")
-
-    found = collection.of(character["name"])
-    draw_centered(screen, fonts["small"], f"Mis fósiles: {len(found)} de {len(DINOSAURS)}", 360)
-    for i, species in enumerate(DINOSAURS):
-        x = settings.WIDTH / 2 + (i - (len(DINOSAURS) - 1) / 2) * 160
-        draw_fossil_card(screen, (x, 400), species, species in found, fonts["tiny"])
-
     if WEB:
-        draw_centered(screen, fonts["small"], "Mantené el dedo apretado para mover la galletita", settings.HEIGHT - 52)
-        draw_centered(screen, fonts["small"], "Tocá un modo para jugar", settings.HEIGHT - 24)
+        draw_centered(screen, fonts["small"], "Mantené el dedo apretado para mover la galletita", settings.HEIGHT - 70)
+        draw_centered(screen, fonts["small"], "Tocá un modo para jugar", settings.HEIGHT - 40)
     else:
         draw_centered(screen, fonts["small"], "Hacé clic en un modo o usá Arriba/Abajo + Enter    Esc: cambiar sobri",
-                      settings.HEIGHT - 24)
+                      settings.HEIGHT - 40)
 
 
 async def run():
@@ -311,9 +315,9 @@ async def run():
                 pointer = None
 
         if character is None:
-            draw_character_select(screen, fonts, highlighted)
+            draw_character_select(screen, fonts, highlighted, collection)
         elif current is None:
-            draw_mode_menu(screen, fonts, character, selected, collection)
+            draw_mode_menu(screen, fonts, character, selected)
         else:
             current.update(dt, pointer)
             current.draw(screen, fonts)

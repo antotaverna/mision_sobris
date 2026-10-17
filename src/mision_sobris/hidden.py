@@ -6,6 +6,7 @@ import random
 import pygame
 
 from mision_sobris import settings
+from mision_sobris.entities import draw_accessory, draw_held
 
 DIRT_COLOR = (150, 105, 60)
 DIRT_DARK = (115, 75, 40)
@@ -146,25 +147,40 @@ def draw_dino_fossil(surface, center, species):
     DINOSAURS[species](surface, pygame.Vector2(center) + (0, -4))
 
 
-def draw_fossil_card(surface, center, species, found, font):
+def draw_fossil_card(surface, center, species, found, font, scale=0.5):
     """A small fossil for the collection, or a buried "?" if it hasn't been found yet."""
+    size = (round(210 * scale), round(110 * scale))
     if found:
         big = pygame.Surface((210, 110), pygame.SRCALPHA)
         draw_dino_fossil(big, (105, 55), species)
-        small = pygame.transform.smoothscale(big, (105, 55))
+        small = pygame.transform.smoothscale(big, size)
         surface.blit(small, small.get_rect(center=center))
     else:
-        patch = pygame.Rect(0, 0, 100, 50)
+        patch = pygame.Rect(0, 0, size[0] - 6, size[1] - 6)
         patch.center = center
         pygame.draw.ellipse(surface, (215, 195, 165), patch)
-        pygame.draw.ellipse(surface, (190, 165, 130), patch, 3)
+        pygame.draw.ellipse(surface, (190, 165, 130), patch, 2)
         mark = font.render("?", True, (160, 130, 95))
         surface.blit(mark, mark.get_rect(center=center))
-    label = font.render(species if found else "???", True, settings.TEXT_COLOR)
-    surface.blit(label, label.get_rect(center=(center[0], center[1] + 42)))
 
 
-# What each find gives, and the line shown when it's found.
+def draw_reward_icon(surface, center, reward, won, font):
+    """A prize with its name under it, faded out if it hasn't been won yet."""
+    icon = pygame.Surface((90, 50), pygame.SRCALPHA)
+    if reward == "hat":
+        draw_accessory(icon, pygame.Vector2(45, 52), 30, "explorer_hat", settings.EXPLORER_HAT_COLOR,
+                       pygame.Vector2(1, 0))
+    else:
+        draw_held(icon, pygame.Vector2(12, 8), 34, "magnifier", pygame.Vector2(1, 0))
+    if not won:
+        icon.set_alpha(55)
+    surface.blit(icon, icon.get_rect(center=(center[0], center[1] - 8)))
+    label = font.render(REWARD_NAMES[reward], True, settings.TEXT_COLOR if won else (190, 170, 145))
+    surface.blit(label, label.get_rect(center=(center[0], center[1] + 26)))
+
+
+# What each find gives: its short name, and the line shown when it's found.
+REWARD_NAMES = {"hat": "Sombrero", "magnifier": "Lupa"}
 REWARD_TEXT = {
     "hat": "Ganaste un sombrero de arqueología",
     "magnifier": "Ganaste una lupa de arqueología",
