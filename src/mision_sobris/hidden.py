@@ -335,12 +335,11 @@ class HiddenDino:
         for pos, _, _ in self.flying_dirt:
             pygame.draw.circle(surface, DIRT_DARK, pos, 4)
         if not self.found and self.marked and self.pos.distance_to(player.pos) < 110:
-            # Pictures instead of words, for players who don't read yet: "+ cookie x3" to grow,
-            # "- burnt cookie x2" to shrink.
+            # A picture instead of words, for players who don't read yet: "cookie x3" to grow,
+            # "burnt cookie x2" to shrink.
             big = self.need == "big"
-            sign = fonts["title"].render("+" if big else "−", True, (60, 160, 70) if big else (50, 110, 200))
             count = fonts["hud"].render(f"x{self.cookies_needed(player)}", True, settings.TEXT_COLOR)
-            bubble = pygame.Rect(0, 0, sign.get_width() + count.get_width() + 76, 56)
+            bubble = pygame.Rect(0, 0, count.get_width() + 76, 56)
             bubble.midbottom = (self.pos.x, self.pos.y - 50)
             # Keep clear of the score and menu button at the top; if there's no room above, go below.
             room = pygame.Rect(0, settings.HUD_HEIGHT, settings.WIDTH, settings.PLAY_HEIGHT - settings.HUD_HEIGHT)
@@ -349,9 +348,7 @@ class HiddenDino:
             bubble.clamp_ip(room)
             pygame.draw.rect(surface, settings.CARD_COLOR, bubble, border_radius=14)
             pygame.draw.rect(surface, settings.HIGHLIGHT_COLOR, bubble, 3, border_radius=14)
-            x = bubble.left + 14
-            surface.blit(sign, sign.get_rect(midleft=(x, bubble.centery + 2)))
-            x += sign.get_width() + 22
+            x = bubble.left + 30
             colors = settings.COOKIE_COLORS if big else settings.BURNT_COLORS
             draw_cookie(surface, pygame.Vector2(x, bubble.centery), 16, ICON_CHIPS, colors)
             surface.blit(count, count.get_rect(midleft=(x + 24, bubble.centery)))
