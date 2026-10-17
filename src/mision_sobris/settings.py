@@ -34,7 +34,7 @@ CHARACTERS = [
      "hard_finds": True},
     {"name": "Juli", "colors": ((200, 110, 130), (240, 170, 185), (175, 35, 65)),  # strawberry
      "accessory": "crown", "accent": (235, 185, 40),
-     "hair": "curls", "hair_color": (140, 80, 40)},  # chestnut
+     "hair": "curls", "hair_color": (165, 100, 55)},  # chestnut
 ]
 
 PLAYER_RADIUS = 28
