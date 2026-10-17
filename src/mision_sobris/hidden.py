@@ -164,6 +164,21 @@ def draw_fossil_card(surface, center, species, found, font, scale=0.5):
         surface.blit(mark, mark.get_rect(center=center))
 
 
+def draw_medal(surface, center, radius):
+    """A gold medal on a ribbon, for completing the fossil collection."""
+    cx, cy = center
+    r = radius
+    for dx, color in ((-0.45, (200, 40, 50)), (0.45, (40, 80, 180))):
+        pygame.draw.polygon(surface, color, [(cx + dx * r - r * 0.4, cy - r * 1.9), (cx + dx * r + r * 0.4, cy - r * 1.9),
+                                             (cx + dx * r * 0.2 + r * 0.25, cy - r * 0.5),
+                                             (cx + dx * r * 0.2 - r * 0.25, cy - r * 0.5)])
+    pygame.draw.circle(surface, (235, 185, 40), center, r)
+    pygame.draw.circle(surface, (185, 135, 25), center, r, max(2, round(r * 0.15)))
+    star = [pygame.Vector2(center) + pygame.Vector2(0, -r * (0.6 if i % 2 == 0 else 0.25)).rotate(i * 36)
+            for i in range(10)]
+    pygame.draw.polygon(surface, (255, 235, 150), star)
+
+
 def draw_reward_icon(surface, center, reward, won, font):
     """A prize with its name under it, faded out if it hasn't been won yet."""
     icon = pygame.Surface((90, 50), pygame.SRCALPHA)

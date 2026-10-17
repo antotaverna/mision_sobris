@@ -11,7 +11,7 @@ SAVE_PATH = Path.home() / ".mision_sobris.json"  # desktop save file
 
 class Collection:
     def __init__(self):
-        # player name -> {"fossils": species found, "rewards": rewards won}, in the order found
+        # player name -> {"fossils": species found, "rewards": rewards won, "medals": collections completed}
         self.found = self._load()
 
     def _load(self):
@@ -27,7 +27,8 @@ class Collection:
             for name, entry in data.items():
                 if isinstance(entry, list):  # older saves only listed the fossils
                     entry = {"fossils": entry}
-                found[name] = {"fossils": list(entry.get("fossils", [])), "rewards": list(entry.get("rewards", []))}
+                found[name] = {"fossils": list(entry.get("fossils", [])), "rewards": list(entry.get("rewards", [])),
+                               "medals": int(entry.get("medals", 0))}
             return found
         except Exception:
             # An unreadable save just means starting a fresh collection.
@@ -51,9 +52,22 @@ class Collection:
     def rewards(self, name):
         return self.found.get(name, {}).get("rewards", [])
 
+    def medals(self, name):
+        return self.found.get(name, {}).get("medals", 0)
+
+    def _entry(self, name):
+        return self.found.setdefault(name, {"fossils": [], "rewards": [], "medals": 0})
+
+    def complete(self, name):
+        """A full collection earns a medal and starts over empty."""
+        entry = self._entry(name)
+        entry["medals"] += 1
+        entry["fossils"] = []
+        self._save()
+
     def add(self, name, kind, item):
         """Record a fossil or reward (kind is "fossils" or "rewards"). Returns True if it was new."""
-        entry = self.found.setdefault(name, {"fossils": [], "rewards": []})
+        entry = self._entry(name)
         if item in entry[kind]:
             return False
         entry[kind].append(item)

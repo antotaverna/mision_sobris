@@ -8,7 +8,8 @@ import pygame
 from mision_sobris import settings
 from mision_sobris.collection import Collection
 from mision_sobris.entities import Chaser, Cookie, Player
-from mision_sobris.hidden import DINOSAURS, REWARD_NAMES, HiddenDino, draw_fossil_card, draw_reward_icon
+from mision_sobris.hidden import (DINOSAURS, REWARD_NAMES, HiddenDino, draw_fossil_card, draw_medal,
+                                  draw_reward_icon)
 
 # Running in the browser (built with pygbag), where there is no window to close.
 WEB = sys.platform == "emscripten"
@@ -61,8 +62,17 @@ class Round:
         # Classic mode hides things in the floor to find by walking over them.
         self.hidden = []
         if not self.challenge:
-            # Two different dinosaurs each round, picked at random.
-            species = random.sample(list(DINOSAURS), 2)
+            # Two different dinosaurs each round, the ones this player is missing first.
+            have = self.collection.fossils(character["name"])
+            if all(kind in have for kind in DINOSAURS):
+                # Saves from before medals existed can hold a full collection; give its medal now.
+                self.collection.complete(character["name"])
+                have = []
+            missing = [kind for kind in DINOSAURS if kind not in have]
+            others = [kind for kind in DINOSAURS if kind in have]
+            random.shuffle(missing)
+            random.shuffle(others)
+            species = (missing + others)[:2]
             for reward, kind in zip(("hat", "magnifier"), species):
                 avoid = [self.player.pos] + [find.pos for find in self.hidden]
                 self.hidden.append(HiddenDino(avoid, reward, kind))
@@ -103,7 +113,8 @@ class Round:
                 if self.collection.add(name, "fossils", find.species):
                     count = len(self.collection.fossils(name))
                     if count == len(DINOSAURS):
-                        find.note = "¡Completaste la colección de fósiles!"
+                        self.collection.complete(name)
+                        find.note = "¡Completaste la colección! Ganaste una medalla"
                     else:
                         find.note = f"¡Nuevo en tu colección! ({count} de {len(DINOSAURS)})"
 
@@ -190,6 +201,11 @@ def draw_character_select(screen, fonts, highlighted, collection):
         for j, reward in enumerate(REWARD_NAMES):
             spot = (rect.centerx + (j - 0.5) * 94, rect.top + 284)
             draw_reward_icon(screen, spot, reward, reward in rewards, fonts["tiny"])
+        medals = collection.medals(character["name"])
+        if medals:
+            draw_medal(screen, (rect.right - 30, rect.top + 38), 14)
+            count = fonts["small"].render(f"x{medals}", True, settings.TEXT_COLOR)
+            screen.blit(count, count.get_rect(center=(rect.right - 30, rect.top + 68)))
     hint = "Tocá tu galletita" if WEB else "Hacé clic en tu galletita o usá Izq/Der + Enter    Esc: salir"
     draw_centered(screen, fonts["small"], hint, settings.HEIGHT - 40)
 
