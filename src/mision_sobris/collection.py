@@ -11,7 +11,8 @@ SAVE_PATH = Path.home() / ".mision_sobris.json"  # desktop save file
 
 class Collection:
     def __init__(self):
-        # player name -> {"fossils": species found, "rewards": rewards won, "medals": collections completed}
+        # player name -> {"fossils": species found, "rewards": rewards won, "medals": collections completed,
+        #                 "rare": Argentinosaurus found}
         self.found = self._load()
 
     def _load(self):
@@ -28,7 +29,7 @@ class Collection:
                 if isinstance(entry, list):  # older saves only listed the fossils
                     entry = {"fossils": entry}
                 found[name] = {"fossils": list(entry.get("fossils", [])), "rewards": list(entry.get("rewards", [])),
-                               "medals": int(entry.get("medals", 0))}
+                               "medals": int(entry.get("medals", 0)), "rare": int(entry.get("rare", 0))}
             return found
         except Exception:
             # An unreadable save just means starting a fresh collection.
@@ -61,7 +62,14 @@ class Collection:
         return self.found.get(name, {}).get("medals", 0)
 
     def _entry(self, name):
-        return self.found.setdefault(name, {"fossils": [], "rewards": [], "medals": 0})
+        return self.found.setdefault(name, {"fossils": [], "rewards": [], "medals": 0, "rare": 0})
+
+    def rare(self, name):
+        return self.found.get(name, {}).get("rare", 0)
+
+    def add_rare(self, name):
+        self._entry(name)["rare"] += 1
+        self._save()
 
     def complete(self, name):
         """A full collection earns a medal and starts over empty."""

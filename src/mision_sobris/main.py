@@ -8,8 +8,9 @@ import pygame
 from mision_sobris import settings
 from mision_sobris.collection import Collection
 from mision_sobris.entities import Chaser, Cookie, Player
-from mision_sobris.hidden import (DINOSAURS, REWARD_NAMES, SHORT_NAMES, HiddenDino, draw_banner, draw_fossil_card,
-                                  draw_medal, draw_reward_icon, render_fit)
+from mision_sobris.hidden import (DINOSAURS, RARE_DINOSAUR, REWARD_NAMES, SHORT_NAMES, HiddenDino,
+                                  draw_argentine_medal, draw_banner, draw_fossil_card, draw_medal,
+                                  draw_reward_icon, render_fit)
 
 # Running in the browser (built with pygbag), where there is no window to close.
 WEB = sys.platform == "emscripten"
@@ -94,10 +95,15 @@ class Round:
         # hard_finds characters can only dig each one up when the cookie is big or small.
         hard = character.get("hard_finds", False)
         needs = [random.choice(("big", "small")) if hard else None for _ in species]
-        self.hidden = []
+        # An Argentinosaurus not dug up yet stays buried; otherwise one may turn up now and then.
+        self.hidden = [find for find in self.hidden if find.rare and not find.found]
         for reward, kind, need in zip(("hat", "magnifier"), species, needs):
             avoid = [self.player.pos] + [find.pos for find in self.hidden]
             self.hidden.append(HiddenDino(avoid, reward, kind, hard, need))
+        if not any(find.rare for find in self.hidden) and random.random() < settings.RARE_CHANCE:
+            avoid = [self.player.pos] + [find.pos for find in self.hidden]
+            # It's a giant, so players who need a size to dig always need to be big for it.
+            self.hidden.append(HiddenDino(avoid, "argentine_medal", RARE_DINOSAUR, hard, "big" if hard else None))
 
     def give_reward(self, reward):
         """Dress the player up with what a hidden find gave, for the rest of the round."""
@@ -128,20 +134,26 @@ class Round:
                     self.score += 1
 
         for find in self.hidden:
-            if find.update(dt, self.player):
-                self.give_reward(find.reward)
-                name = self.character["name"]
-                self.collection.add(name, "rewards", find.reward)
-                if self.collection.add(name, "fossils", find.species):
-                    count = len(self.collection.fossils(name))
-                    if count == len(DINOSAURS):
-                        self.collection.complete(name)
-                        find.note = "¡Completaste la colección! Ganaste una medalla"
-                    else:
-                        find.note = f"¡Nuevo en tu colección! ({count} de {len(DINOSAURS)})"
+            if not find.update(dt, self.player):
+                continue
+            name = self.character["name"]
+            if find.rare:
+                self.collection.add_rare(name)
+                find.note = "¡Un dinosaurio gigante de Argentina!"
+                continue
+            self.give_reward(find.reward)
+            self.collection.add(name, "rewards", find.reward)
+            if self.collection.add(name, "fossils", find.species):
+                count = len(self.collection.fossils(name))
+                if count == len(DINOSAURS):
+                    self.collection.complete(name)
+                    find.note = "¡Completaste la colección! Ganaste una medalla"
+                else:
+                    find.note = f"¡Nuevo en tu colección! ({count} de {len(DINOSAURS)})"
 
         self.announce_timer = max(0.0, self.announce_timer - dt)
-        if self.hidden and all(find.done() for find in self.hidden):
+        # A buried Argentinosaurus doesn't hold up the next pair; one being dug up does.
+        if self.hidden and all(find.done() for find in self.hidden if not find.rare or find.found):
             if self.rebury_timer is None:
                 self.rebury_timer = settings.REBURY_DELAY
             self.rebury_timer -= dt
@@ -261,9 +273,17 @@ def draw_progress_panel(screen, fonts, character, collection):
     # Prizes and medals, bottom left.
     rewards = collection.rewards(name)
     for j, reward in enumerate(REWARD_NAMES):
-        draw_reward_icon(screen, (55 + j * 92, top + 158), reward, reward in rewards, fonts["tiny"])
-    draw_medal(screen, (232, top + 152), 13)
-    text(f"Medallas: {collection.medals(name)}", "tiny", (232, top + 186))
+        draw_reward_icon(screen, (48 + j * 80, top + 158), reward, reward in rewards, fonts["tiny"])
+    draw_medal(screen, (196, top + 152), 13)
+    text(f"x{collection.medals(name)}", "small", (196, top + 186))
+    # The Argentine medal stays faded until the first Argentinosaurus.
+    rare = collection.rare(name)
+    medal = pygame.Surface((40, 50), pygame.SRCALPHA)
+    draw_argentine_medal(medal, (20, 32), 13)
+    if not rare:
+        medal.set_alpha(55)
+    screen.blit(medal, medal.get_rect(center=(254, top + 150)))
+    text(f"x{rare}", "small", (254, top + 186), settings.TEXT_COLOR if rare else (190, 170, 145))
 
     # Everyone else, bottom right.
     text("Los demás", "small", (415, top + 137))

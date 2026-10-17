@@ -130,6 +130,17 @@ def draw_stegosaurus(surface, c):
     skull(surface, c + (-54, 8), (20, 11), (-2, -1))
 
 
+def draw_argentinosaurus(surface, c):
+    """The giant from Neuquén: like a Brontosaurus, but bigger and sturdier."""
+    spine = along([c + (-66, -38), c + (-56, -28), c + (-40, -12), c + (-18, -8), c + (16, -8),
+                   c + (44, -1), c + (66, 6), c + (92, 11)], 36)
+    ribs(surface, spine[12:21], 22)
+    for x in (-24, -12, 22, 34):
+        leg(surface, c + (x, -6), c + (x + 1, 16), c + (x, 36), 6, 7)
+    vertebrae(surface, spine, 6, 2.5)
+    skull(surface, c + (-74, -40), (22, 12), (-2, -1))
+
+
 # Spanish name shown to players -> how to draw its skeleton.
 DINOSAURS = {
     "Tiranosaurio rex": draw_trex,
@@ -137,6 +148,9 @@ DINOSAURS = {
     "Brontosaurio": draw_brontosaurus,
     "Estegosaurio": draw_stegosaurus,
 }
+# Found only now and then, outside the collection of four; it earns the Argentine medal.
+RARE_DINOSAUR = "Argentinosaurio"
+FOSSIL_DRAWINGS = {**DINOSAURS, RARE_DINOSAUR: draw_argentinosaurus}
 
 def render_fit(fonts, text, max_width, color, names=("hud", "small")):
     """Render text in the first of the named fonts it fits in, or the last one."""
@@ -165,11 +179,12 @@ SHORT_NAMES = {"Tiranosaurio rex": "T. rex"}
 
 def draw_dino_fossil(surface, center, species):
     """A dinosaur skeleton lying in a patch of dug-up dirt, looking left."""
-    patch = pygame.Rect(0, 0, 200, 100)
+    rare = species == RARE_DINOSAUR
+    patch = pygame.Rect(0, 0, 236, 120) if rare else pygame.Rect(0, 0, 200, 100)
     patch.center = center
     pygame.draw.ellipse(surface, DIRT_COLOR, patch)
-    pygame.draw.ellipse(surface, DIRT_DARK, patch, 4)
-    DINOSAURS[species](surface, pygame.Vector2(center) + (0, -4))
+    pygame.draw.ellipse(surface, (220, 175, 50) if rare else DIRT_DARK, patch, 4)
+    FOSSIL_DRAWINGS[species](surface, pygame.Vector2(center) + (0, -4))
 
 
 def draw_fossil_card(surface, center, species, found, font, scale=0.5):
@@ -204,6 +219,25 @@ def draw_medal(surface, center, radius):
     pygame.draw.polygon(surface, (255, 235, 150), star)
 
 
+def draw_argentine_medal(surface, center, radius):
+    """A gold medal with a sun on a light blue and white ribbon, for finding the Argentinosaurus."""
+    cx, cy = center
+    r = radius
+    ribbon = pygame.Rect(0, 0, r * 1.5, r * 1.5)
+    ribbon.midbottom = (cx, cy - r * 0.6)
+    third = ribbon.width / 3
+    for i, color in enumerate(((116, 172, 223), (255, 255, 255), (116, 172, 223))):
+        pygame.draw.rect(surface, color, (ribbon.left + i * third, ribbon.top, math.ceil(third), ribbon.height))
+    pygame.draw.circle(surface, (235, 185, 40), center, r)
+    pygame.draw.circle(surface, (185, 135, 25), center, r, max(2, round(r * 0.15)))
+    # The Sun of May: a face-sized disc with rays.
+    for i in range(12):
+        ray = pygame.Vector2(0, -r * 0.62).rotate(i * 30)
+        pygame.draw.line(surface, (245, 160, 30), pygame.Vector2(center) + ray * 0.5, pygame.Vector2(center) + ray,
+                         max(1, round(r * 0.1)))
+    pygame.draw.circle(surface, (250, 205, 60), center, r * 0.32)
+
+
 def draw_reward_icon(surface, center, reward, won, font):
     """A prize with its name under it, faded out if it hasn't been won yet."""
     icon = pygame.Surface((90, 50), pygame.SRCALPHA)
@@ -224,6 +258,7 @@ REWARD_NAMES = {"hat": "Sombrero", "magnifier": "Lupa"}
 REWARD_TEXT = {
     "hat": "Ganaste un sombrero de arqueología",
     "magnifier": "Ganaste una lupa de arqueología",
+    "argentine_medal": "Ganaste la medalla argentina",
 }
 
 
@@ -232,6 +267,7 @@ class HiddenDino:
 
     def __init__(self, avoid_positions, reward, species, hard=False, need=None):
         self.reward = reward
+        self.rare = species == RARE_DINOSAUR
         self.need = need  # None, "big", or "small": the size needed to dig it up
         self.marked = False  # stepped on at the wrong size, so its spot shows
         self.find_distance = settings.HIDDEN_HARD_FIND_DISTANCE if hard else settings.HIDDEN_FIND_DISTANCE
@@ -325,8 +361,8 @@ class HiddenDino:
             hole.center = self.pos
             pygame.draw.ellipse(surface, DIRT_COLOR, hole)
         else:
-            big = pygame.Surface((210, 110), pygame.SRCALPHA)
-            draw_dino_fossil(big, (105, 55), self.species)
+            big = pygame.Surface((240, 130), pygame.SRCALPHA)
+            draw_dino_fossil(big, (120, 65), self.species)
             small = pygame.transform.smoothscale_by(big, settings.FOSSIL_SCALE)
             surface.blit(small, small.get_rect(center=self.pos))
 

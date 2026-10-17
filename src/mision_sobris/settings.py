@@ -73,6 +73,7 @@ HIDDEN_SMALL_RADIUS = 18  # two burnt cookies from the starting size
 FOSSIL_SCALE = 0.65  # size of a dug-up fossil on the floor
 HIDDEN_DIG_TIME = 1.0  # seconds of flying dirt before the find shows up
 HIDDEN_MESSAGE_TIME = 3.5  # seconds the "you found..." banner stays up
+RARE_CHANCE = 0.2  # chance each new pair of finds comes with the rare Argentinosaurus too
 REBURY_DELAY = 2.0  # seconds after both finds are dug up before two more get buried
 EXPLORER_HAT_COLOR = (195, 160, 100)
 # Accessories worn under the explorer hat; any other accessory is swapped for it.
