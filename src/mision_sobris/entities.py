@@ -119,14 +119,6 @@ def draw_accessory(surface, center, radius, kind, color, facing):
                   (cx + half, base_y)]
         pygame.draw.polygon(surface, color, points)
         pygame.draw.circle(surface, (200, 30, 60), (cx, base_y - r * 0.14), r * 0.08)
-    elif kind == "glasses":
-        width = max(2, round(r * 0.07))
-        lenses = []
-        for s in (-1, 1):
-            eye = pygame.Vector2(cx + s * r * 0.32, cy - r * 0.22) + look
-            pygame.draw.circle(surface, color, eye, r * 0.26, width)
-            lenses.append(eye)
-        pygame.draw.line(surface, color, lenses[0] + (r * 0.26, 0), lenses[1] - (r * 0.26, 0), width)
     elif kind == "spider":
         # Spider-Man mask over the upper face: red with a web, big white lenses, mouth left free.
         size = math.ceil(r * 2)
@@ -155,8 +147,19 @@ def draw_accessory(surface, center, radius, kind, color, facing):
 def draw_hair(surface, center, radius, kind, color):
     """Draw hair peeking out from behind the cookie."""
     r = radius
+    cx, cy = center
     shade = tuple(round(c * 0.75) for c in color)
-    if kind == "curls":
+    if kind == "long":
+        # Around the top of the head, then two long locks hanging down past the chin.
+        old_clip = surface.get_clip()
+        surface.set_clip(pygame.Rect(cx - r * 1.2, cy - r * 1.2, r * 2.4, r * 1.3))
+        pygame.draw.circle(surface, color, center, r * 1.1)
+        surface.set_clip(old_clip)
+        for s in (-1, 1):
+            lock = pygame.Rect(0, 0, r * 0.55, r * 1.6)
+            lock.midtop = (cx + s * r * 0.82, cy - r * 0.2)
+            pygame.draw.rect(surface, color, lock, border_radius=round(r * 0.27))
+    elif kind == "curls":
         # Two ringlets hanging from the nape, a few twists each.
         for angle in (35, 145):
             a = math.radians(angle)
@@ -177,6 +180,19 @@ def draw_hair(surface, center, radius, kind, color):
             ring = pygame.Rect(0, 0, r * 0.24, r * 0.24)
             ring.center = curl
             pygame.draw.arc(surface, shade, ring, 0.5, 5.5, max(1, round(r * 0.05)))
+
+
+def draw_hair_front(surface, center, radius, kind, color):
+    """The part of the hair that goes over the face, like bangs."""
+    r = radius
+    cx, cy = center
+    if kind == "long":
+        old_clip = surface.get_clip()
+        surface.set_clip(pygame.Rect(cx - r * 1.2, cy - r * 1.2, r * 2.4, r * 0.7))
+        pygame.draw.circle(surface, color, center, r * 1.02)
+        surface.set_clip(old_clip)
+        # A side part, so it reads as hair rather than a hat.
+        pygame.draw.circle(surface, color, (cx - r * 0.3, cy - r * 0.6), r * 0.24)
 
 
 def draw_ride(surface, center, radius, kind):
@@ -273,6 +289,8 @@ class Player:
             pygame.draw.arc(surface, mouth_color, smile, math.pi * 1.1, math.pi * 1.9, width)
 
         if self.character:
+            if "hair" in self.character:
+                draw_hair_front(surface, self.pos, r, self.character["hair"], self.character["hair_color"])
             draw_accessory(surface, self.pos, r, self.character["accessory"], self.character["accent"], self.facing)
             if "hat" in self.character:
                 draw_accessory(surface, self.pos, r, self.character["hat"], settings.EXPLORER_HAT_COLOR, self.facing)

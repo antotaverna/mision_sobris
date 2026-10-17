@@ -19,9 +19,9 @@ BURNT_COLORS = ((30, 20, 15), (65, 42, 28), (20, 12, 8))
 CHASER_COLORS = ((120, 60, 30), (175, 95, 50), (60, 25, 10))
 
 # Playable characters, one per nephew/niece. accessory is one of:
-# "cat_ears", "headphones", "crown", "spider", "glasses" (see entities.draw_accessory). The optional
+# "cat_ears", "headphones", "crown", "spider", or None (see entities.draw_accessory). The optional
 # ride ("skateboard") is drawn under the cookie (see entities.draw_ride), and the optional
-# hair ("curls", in hair_color) behind it (see entities.draw_hair). hard_finds makes the
+# hair ("curls" or "long", in hair_color) behind it (see entities.draw_hair). hard_finds makes the
 # buried dinosaurs harder to find (see the HIDDEN_HARD_* settings).
 CHARACTERS = [
     {"name": "Juani", "colors": ((205, 170, 110), (250, 228, 175), (90, 55, 25)),  # vanilla
@@ -39,7 +39,8 @@ CHARACTERS = [
 
 # A secret extra player, peeking out of a corner of the character select.
 SECRET_CHARACTER = {"name": "Anto", "colors": ((205, 175, 50), (250, 228, 120), (185, 135, 25)),  # lemon
-                    "accessory": "glasses", "accent": (45, 40, 50), "hard_finds": True}
+                    "accessory": None, "accent": None, "hair": "long", "hair_color": (30, 25, 30),
+                    "hard_finds": True}
 
 PLAYER_RADIUS = 28
 PLAYER_MIN_RADIUS = 16
@@ -74,4 +75,4 @@ HIDDEN_MESSAGE_TIME = 3.5  # seconds the "you found..." banner stays up
 REBURY_DELAY = 2.0  # seconds after both finds are dug up before two more get buried
 EXPLORER_HAT_COLOR = (195, 160, 100)
 # Accessories worn under the explorer hat; any other accessory is swapped for it.
-ACCESSORIES_KEPT_UNDER_HAT = ("spider", "glasses")
+ACCESSORIES_KEPT_UNDER_HAT = ("spider",)
