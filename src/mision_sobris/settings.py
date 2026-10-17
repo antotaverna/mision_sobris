@@ -62,6 +62,7 @@ HIDDEN_HARD_HINT_DISTANCE = 60
 # Some finds can only be dug up at a certain size: big (eat cookies) or small (eat burnt ones).
 HIDDEN_BIG_RADIUS = 40  # about 8 cookies from the starting size
 HIDDEN_SMALL_RADIUS = 18  # two burnt cookies from the starting size
+FOSSIL_SCALE = 0.65  # size of a dug-up fossil on the floor
 HIDDEN_DIG_TIME = 1.0  # seconds of flying dirt before the find shows up
 HIDDEN_MESSAGE_TIME = 3.5  # seconds the "you found..." banner stays up
 EXPLORER_HAT_COLOR = (195, 160, 100)

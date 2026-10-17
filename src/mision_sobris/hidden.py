@@ -293,12 +293,15 @@ class HiddenDino:
                     pygame.draw.circle(surface, DIRT_DARK, self.pos + speck, 3.5)
             return
         if self.dig_timer > 0:
-            size = 1 - self.dig_timer / settings.HIDDEN_DIG_TIME
-            hole = pygame.Rect(0, 0, 40 + 130 * size, 20 + 70 * size)
+            size = (1 - self.dig_timer / settings.HIDDEN_DIG_TIME) * settings.FOSSIL_SCALE
+            hole = pygame.Rect(0, 0, 40 + 160 * size, 20 + 80 * size)
             hole.center = self.pos
             pygame.draw.ellipse(surface, DIRT_COLOR, hole)
         else:
-            draw_dino_fossil(surface, self.pos, self.species)
+            big = pygame.Surface((210, 110), pygame.SRCALPHA)
+            draw_dino_fossil(big, (105, 55), self.species)
+            small = pygame.transform.smoothscale_by(big, settings.FOSSIL_SCALE)
+            surface.blit(small, small.get_rect(center=self.pos))
 
     def draw_effects(self, surface, fonts, player):
         """Flying dirt, the "you need..." bubble, and the "you found..." banner, over everything else."""
