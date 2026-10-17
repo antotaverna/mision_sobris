@@ -27,7 +27,7 @@ CHARACTERS = [
     {"name": "Juani", "colors": ((205, 170, 110), (250, 228, 175), (90, 55, 25)),  # vanilla
      "accessory": "spider", "accent": (205, 25, 35), "hard_finds": True},
     {"name": "Lucha", "colors": ((150, 90, 40), (200, 135, 70), (105, 55, 20)),  # dulce de leche
-     "accessory": "cat_ears", "accent": (235, 120, 165),
+     "accessory": "cat_ears", "accent": (60, 165, 80),
      "hair": "curls", "hair_color": (240, 195, 70)},  # golden
     {"name": "Male", "colors": ((120, 105, 170), (195, 185, 228), (60, 45, 125)),  # blueberry
      "accessory": "headphones", "accent": (130, 60, 190), "ride": "skateboard",
