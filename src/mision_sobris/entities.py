@@ -127,6 +127,20 @@ def draw_accessory(surface, center, radius, kind, color, facing):
             pygame.draw.polygon(surface, (20, 20, 20), lens, max(2, round(r * 0.06)))
 
 
+def draw_hair(surface, center, radius, kind):
+    """Draw hair peeking out from behind the cookie."""
+    r = radius
+    if kind == "curls":
+        # Golden curls down both sides and around the nape.
+        for angle in (5, 30, 55, 125, 150, 175):
+            a = math.radians(angle)
+            curl = pygame.Vector2(center) + pygame.Vector2(math.cos(a), math.sin(a)) * r * 0.98
+            pygame.draw.circle(surface, (240, 195, 70), curl, r * 0.24)
+            ring = pygame.Rect(0, 0, r * 0.26, r * 0.26)
+            ring.center = curl
+            pygame.draw.arc(surface, (185, 130, 30), ring, 0.5, 5.5, max(1, round(r * 0.05)))
+
+
 def draw_ride(surface, center, radius, kind):
     """Draw what a character rides on, sitting under the cookie."""
     cx, cy = center
@@ -187,6 +201,8 @@ class Player:
     def draw(self, surface):
         r = self.radius
         colors = self.character["colors"] if self.character else settings.COOKIE_COLORS
+        if self.character and "hair" in self.character:
+            draw_hair(surface, self.pos, r, self.character["hair"])
         draw_cookie(surface, self.pos, r, self.chips, colors)
         draw_eyes(surface, self.pos, r, self.facing)
 
